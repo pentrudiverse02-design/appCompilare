@@ -1,31 +1,32 @@
-import socket
+import asyncio
+from email import message
 
 
-def server_app():
-    port = int(input('port ul server'))
-    while port<0 or port>10000:
-        print("introduceti va rog un port ok")
-        port = int(input('port ul server'))
-    host = '127.0.0.1'
-    nrMaxConexiuni=5
-    server_socker = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        #facem server de tip TCP
-        #eu doresc sa folosesc TCP intrucat vreau sa asigur o siguranta a transmiterii datelor
-    server_socker.bind((host,port))
-    server_socker.listen(nrMaxConexiuni)
-    conn, address = server_socker.recv(1024)
-    print(f"Conexiune stabilita cu {str(address)}")
-    while True:
-        raw=conn.recv(1024)
-        if not raw:
-            break
-        try:
-            data=raw.decode('utf-8')
-        except:
-            print("probleme la decodare de la" + str(address))
-            continue
-        print(f"am receptionat {data}")
-        trimit=input('-> ')
-        conn.sendall(trimit.encode())
-    conn.close()
-    server_socker.close()
+class Server:
+    clients={}
+    server_host = '127.0.0.1' 
+    server_port = 8008
+    folderServer = ''
+    maxConnections = 0
+    SERVER=0
+    def __init__(self):
+        asyncio.run(self.CreateServer())
+    async def CreateServer(self):
+        self.SERVER= await asyncio.start_server(self.ClientConnect,self.server_host,self.server_port)
+
+        addrs = ', '.join(str(sock.getsockname()) for sock in self.SERVER.sockets)
+        print(f'Serving on {addrs}')
+        async with self.SERVER:
+            await self.SERVER.serve_forever()
+
+
+
+    async def ClientConnect(self,reader,writer):
+        data = await reader.read(1024)
+        message = data.decode('utf-8')
+        addr = writer.get_extra_info('peername')
+        print(f"am primit {message} de la {addr}")
+        writer.write("ok".encode('utf-8'))
+        await writer.drain()
+
+Server()
