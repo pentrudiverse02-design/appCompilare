@@ -15,9 +15,13 @@ HEADER_SIZE= struct.calcsize(HEADER_FORMAT)
 
 async def ReadPackage(reader: asyncio.StreamReader):
     header = await reader.read(HEADER_SIZE)
-    type, lenght = struct.unpack(HEADER_FORMAT,header)
+    typep, lenght = struct.unpack(HEADER_FORMAT,header)
     payload = await reader.readexactly(lenght)
-    return type, payload
+    return typep, payload
+async def PrintMessage(reader: asyncio.StreamReader):
+    typep, payload= ReadPackage(reader)
+    print(typep)
+    print(payload.decode('utf-8'))
 async def WritePackage(writer : asyncio.StreamWriter,
                        messageType : PackageType,
                        payload : bytes):

@@ -1,7 +1,6 @@
 import json
 import socket
 import asyncio
-import struct
 
 import Package
 from compilType import CompilationType
