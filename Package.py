@@ -7,7 +7,7 @@ class PackageType(IntEnum):
     LOGIN_CREDENTIALS = 0
     UPLOAD_ZIP = 1
     GET_LOGS = 2
-    GET_STATUS = 3
+    STATUS = 3
     GET_ERRORS = 4
     RESULT = 5
 HEADER_FORMAT = "!BI" # ! = little endian , B = Byte ,  I = Integer

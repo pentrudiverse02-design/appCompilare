@@ -1,5 +1,9 @@
+import json
 import socket
 import asyncio
+import struct
+
+import Package
 from compilType import CompilationType
 from sysArhitecture import SystemArchitecture
 
@@ -7,7 +11,7 @@ from sysArhitecture import SystemArchitecture
 class Client:
     listaZip = []
     serverCon = "127.0.0.1", 8008
-    reader ,writer = 0 , 0
+    writer, reader = None, None
     folderLocation = ""
     socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     compileFor = CompilationType.RELEASE
@@ -27,45 +31,31 @@ class Client:
         self.folderLocation = folder
         self.numeClient = nume
 
+
     def GetClientData(self):
-        return "name" + str(self.numeClient) + "compileFor" + str(self.compileFor) + "sysArhi" + str(self.sysArhi)+ "stay" + str(self.stayInServer) + "folderloc" + str(self.folderLocation)
+        dataJson={"name" : str(self.numeClient),
+                  "compileFor" : str(self.compileFor) ,
+                  "sysArhi" : str(self.sysArhi) ,
+                  "stay" : str(self.stayInServer) ,
+                  "folderloc" : str(self.folderLocation)}
+        return json.dumps(dataJson).encode('utf-8')
 
     async def ConnectToServer(self):
         try:
             async with asyncio.timeout(100):
                 self.reader, self.writer = await asyncio.open_connection("127.0.0.1", 8008)
                 print(f'Send: ')
-                self.writer.write(self.GetClientData().encode())
-                await self.writer.drain()
+                await Package.WritePackage(self.writer,Package.PackageType.LOGIN_CREDENTIALS,self.GetClientData())
 
-                data = await self.reader.read(100)
-                if data.decode('utf-8') != "ok":
-                    print("serverul nu ne da voie sa ne conectam la el.")
-                else:
+                type, data = await Package.ReadPackage(self.reader)
+                if data.decode('utf-8') == Package.PackageType.STATUS and data.decode('utf-8')=="ok":
                     print("CONECTAT CU SERVER-ul")
+                else:
+                    print("serverul nu ne da voie sa ne conectam la el.")
         except TimeoutError:
             print("nu se poate realiza conexiunea cu server ul")
 
-        # try:
-        #     async with asyncio.timeout(10) as expCon:
-        #         self.socket.connect(self.serverCon)
-        # except:
-        #     print("eroare la conexiune")
-        # if expCon.expired():
-        #     print("a expirant timpul pentru conexiunea cu serverul!")
-        #     print("mai incercam conexiunea!")
-        #     #reincercam conexiunea
-        #     self.ConnectToServer()
-        #     #reincercam conexiunea
-        #
-        # else:
-        #     try:
-        #         async with asyncio.timeout(10) as expSendData:
-        #             self.socket.sendall(self.GetClientData().encode('utf-8'))
-        #
-        # while True:
-        #     data = self.socket.recv(1024)
-        #     if data:
-        #         data=data.decode('utf-8')
-        #         if data=="ok":
-        #             return True
+
+
+a=Client(CompilationType.DEBUG,SystemArchitecture.arm64,False,'',"client")
+asyncio.run(a.ConnectToServer())
