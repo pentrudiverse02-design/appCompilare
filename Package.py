@@ -1,10 +1,10 @@
 import asyncio
 import struct
-from calendar import week
 from enum import IntEnum
 
 
 class PackageType(IntEnum):
+    LOGIN_CREDENTIALS = 0
     UPLOAD_ZIP = 1
     GET_LOGS = 2
     GET_STATUS = 3

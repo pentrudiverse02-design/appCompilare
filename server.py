@@ -1,5 +1,9 @@
 import asyncio
-from email import message
+import json
+import struct
+
+import Package
+from Package import HEADER_FORMAT
 
 
 class Server:
@@ -19,25 +23,33 @@ class Server:
             await self.SERVER.serve_forever()
 
     async def ClientConnect(self,addr,reader:asyncio.StreamReader,writer:asyncio.StreamWriter):
-        data= await reader.read(1024)
-        data=data.decode('utf-8')
-        self.clients[addr]={reader,writer,data}
-        writer.write("ok".encode('utf-8'))
-        await writer.drain()
+        header = await reader.read(Package.HEADER_SIZE)
+        mestype, lungimeData= struct.unpack(HEADER_FORMAT,header)
+        if mestype is not Package.PackageType.LOGIN_CREDENTIALS:
+            writer.write(f"draga {addr}, trimite mi creditentialele tale".encode('utf-8'))
+            await writer.drain()
+            return
+        data = await reader.readexactly(lungimeData)
+        data = json.loads( data.decode('utf-8'))
+        self.clients[addr]={"readerPipe":reader,
+                            "writerPipe":writer,
+                            "request":data}
+        if self.clients.__contains__(addr):
+            writer.write(f"am primit de la tine {addr} datele {self.clients[addr]}".encode('utf-8'))
+            await writer.drain()
+
 
     async def ClientHandle(self,reader:asyncio.StreamReader,writer:asyncio.StreamWriter):
         if not self.clients.__contains__(writer.get_extra_info('peername')):
-            self.ClientConnect(writer.get_extra_info('peername'), reader,writer)
-        data = await reader.read(1024)
-        message = data.decode('utf-8')
-        addr = writer.get_extra_info('peername')
-        print(f"am primit {message} de la {addr}")
-        self.clients[addr]=message
-        writer.write("ok".encode('utf-8'))
-        await writer.drain()
+            await self.ClientConnect(writer.get_extra_info('peername'), reader,writer)
+
+        # data = await reader.read(1024)
+        # message = data.decode('utf-8')
+        # addr = writer.get_extra_info('peername')
+        # print(f"am primit {message} de la {addr}")
+        # self.clients[addr]=message
+        # writer.write("ok".encode('utf-8'))
+        # await writer.drain()
 
 while True:
     a=Server()
-    print("introduceti ce doriti sa faceti cu urmatoarele coenxiuni:")
-    for i in a.clients:
-        print(f" client {i} ", end ='' )
