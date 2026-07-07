@@ -44,7 +44,7 @@ class Server:
             s = f"am primit de la tine {addr} datele {self.clients[addr]}".encode('utf-8')
             print(s)
             print(self.clients[addr]["request"])
-            if self.clients[addr]["request"]["stay"] is False:
+            if self.clients[addr]["request"]["stay"] == False:
                 #facem in ascunse
                 self.clients[addr]["request"]["folderloc"] = "AppCompilareServerDir/ascunse/"+self.clients[addr]["request"]["folderloc"]
             else:
@@ -83,7 +83,9 @@ class Server:
         for i in self.clients[client]["request"]["expected"].keys():
             file = open(self.clients[client]["request"]["folderloc"] + i)
             while True:
-                file.write(await stream.readexactly(self.clients[client]["request"]["expected"][i]))
+                continut=await stream.readexactly(self.clients[client]["request"]["expected"][i])
+                await continut.drain()
+                file.write(continut)
 
     async def ReceiveErrors(self, client):
         pass

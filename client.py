@@ -25,7 +25,7 @@ class Client:
     def __init__(self,
                  compileType: CompilationType,
                  systemArchi: SystemArchitecture,
-                 stay: int,
+                 stay: bool,
                  folder: str,
                  Zips, #aici trebuie sa fie de tip [string, string, etc]
                  nume: str):
@@ -40,7 +40,7 @@ class Client:
         dataJson = {"name": str(self.numeClient),
                     "compileFor": str(self.compileFor),
                     "sysArhi": str(self.sysArhi),
-                    "stay": str(self.stayInServer),
+                    "stay": self.stayInServer,
                     "expected": self.selectedZips,
                     "folderloc": str(self.folderLocation)}
         return json.dumps(dataJson).encode('utf-8')
