@@ -1,4 +1,5 @@
 import json
+import os.path
 import socket
 import asyncio
 
@@ -11,7 +12,8 @@ class Client:
     serverCon = "127.0.0.1", 8008
     writer, reader = asyncio.StreamWriter, asyncio.StreamReader
     folderLocation = ""
-    selectedZips = []
+    selectedZips = {} # aici am facut din simplu vector in dictionar,
+                      # sa stiu exact cat trebuie sa primesc de la fiecare .zip in parte
     socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     compileFor = CompilationType.RELEASE
     sysArhi = SystemArchitecture.x86_64
@@ -23,13 +25,13 @@ class Client:
                  systemArchi: SystemArchitecture,
                  stay: int,
                  folder: str,
-                 selectedZips: [],
+                 Zips, #aici trebuie sa fie de tip [string, string, etc]
                  nume: str):
         self.compileFor = compileType
         self.sysArhi = systemArchi
         self.stayInServer = stay
         self.folderLocation = folder
-        self.selectedZips = selectedZips
+        self.ConstructZipDict(Zips)
         self.numeClient = nume
 
     def GetClientData(self):
@@ -56,20 +58,23 @@ class Client:
         except TimeoutError:
             print("nu se poate realiza conexiunea cu server ul")
 
+    def ConstructZipDict(self,Zips):
+        for i in Zips:
+            self.selectedZips[i]=os.path.getsize(i)
+
     async def SendAFile(self):
         try:
             async with asyncio.timeout(1000):
                 if self.writer is not None:
                     print("nu avem stream pe care sa scriem")
                     return
-                for i in self.selectedZips:
-                    bufsize = Package.PAYLOAD_SIZE
-                    with open(self.folderLocation + i, 'rb') as f:
-                        while True:
-                            payload = f.read(bufsize)
-                            if payload is None:
-                                break
-                            await Package.WritePackage(self.writer, Package.PackageType.UPLOAD_ZIP, payload)
+                for i in self.selectedZips.keys():
+                    bufsize = self.selectedZips[i]
+                    with open(i, 'rb') as f:
+                        payload = f.read(bufsize)
+                        if payload is None:
+                            break
+                        await Package.WritePackage(self.writer, Package.PackageType.UPLOAD_ZIP, payload)
         finally:
             print("timeout din sendfile")
 
