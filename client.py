@@ -6,7 +6,6 @@ import Package
 from compilType import CompilationType
 from sysArhitecture import SystemArchitecture
 
-
 class Client:
     listaZip = []
     serverCon = "127.0.0.1", 8008
@@ -33,24 +32,24 @@ class Client:
         self.selectedZips = selectedZips
         self.numeClient = nume
 
-
     def GetClientData(self):
-        dataJson={"name" : str(self.numeClient),
-                  "compileFor" : str(self.compileFor) ,
-                  "sysArhi" : str(self.sysArhi) ,
-                  "stay" : str(self.stayInServer) ,
-                  "folderloc" : str(self.folderLocation)}
+        dataJson = {"name": str(self.numeClient),
+                    "compileFor": str(self.compileFor),
+                    "sysArhi": str(self.sysArhi),
+                    "stay": str(self.stayInServer),
+                    "expected": self.selectedZips,
+                    "folderloc": str(self.folderLocation)}
         return json.dumps(dataJson).encode('utf-8')
 
     async def ConnectToServer(self):
         try:
-            async with asyncio.timeout(1000):
+            async with asyncio.timeout(1000000):
                 self.reader, self.writer = await asyncio.open_connection("127.0.0.1", 8008)
                 print(f'Send: ')
-                await Package.WritePackage(self.writer,Package.PackageType.LOGIN_CREDENTIALS,self.GetClientData())
+                await Package.WritePackage(self.writer, Package.PackageType.LOGIN_CREDENTIALS, self.GetClientData())
 
                 type, data = await Package.ReadPackage(self.reader)
-                if type == Package.PackageType.STATUS and data.decode('utf-8')=="ok":
+                if type == Package.PackageType.STATUS and data.decode('utf-8') == "ok":
                     print("CONECTAT CU SERVER-ul")
                 else:
                     print("serverul nu ne da voie sa ne conectam la el.")
@@ -64,20 +63,16 @@ class Client:
                     print("nu avem stream pe care sa scriem")
                     return
                 for i in self.selectedZips:
-                    bufsize=Package.PAYLOAD_SIZE
-                    with open(self.folderLocation+i,'rb') as f:
+                    bufsize = Package.PAYLOAD_SIZE
+                    with open(self.folderLocation + i, 'rb') as f:
                         while True:
-                            payload=f.read(bufsize)
+                            payload = f.read(bufsize)
                             if payload is None:
                                 break
-                            await Package.WritePackage(self.writer,Package.PackageType.UPLOAD_ZIP,payload)
+                            await Package.WritePackage(self.writer, Package.PackageType.UPLOAD_ZIP, payload)
         finally:
             print("timeout din sendfile")
 
 
-
-
-
-a=Client(CompilationType.DEBUG,SystemArchitecture.x86_64,True,'clientFolder',["p1C.zip"],"client1")
+a = Client(CompilationType.DEBUG, SystemArchitecture.x86_64, True, 'client_1_Folder', ["p1C.zip"], "client1")
 asyncio.run(a.ConnectToServer())
-asyncio.run(a.selectedZips())
