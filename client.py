@@ -41,13 +41,13 @@ class Client:
 
     async def ConnectToServer(self):
         try:
-            async with asyncio.timeout(100):
+            async with asyncio.timeout(1000):
                 self.reader, self.writer = await asyncio.open_connection("127.0.0.1", 8008)
                 print(f'Send: ')
                 await Package.WritePackage(self.writer,Package.PackageType.LOGIN_CREDENTIALS,self.GetClientData())
 
                 type, data = await Package.ReadPackage(self.reader)
-                if data.decode('utf-8') == Package.PackageType.STATUS and data.decode('utf-8')=="ok":
+                if type == Package.PackageType.STATUS and data.decode('utf-8')=="ok":
                     print("CONECTAT CU SERVER-ul")
                 else:
                     print("serverul nu ne da voie sa ne conectam la el.")
@@ -56,5 +56,5 @@ class Client:
 
 
 
-a=Client(CompilationType.DEBUG,SystemArchitecture.arm64,False,'',"client")
+a=Client(CompilationType.DEBUG,SystemArchitecture.x86_64,True,'',"client3")
 asyncio.run(a.ConnectToServer())

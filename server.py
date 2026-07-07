@@ -36,6 +36,7 @@ class Server:
                             "request":data}
         if addr in self.clients.keys():
             s=f"am primit de la tine {addr} datele {self.clients[addr]}".encode('utf-8')
+            print(s)
             await Package.WritePackage(self.clients[addr]["writerPipe"],
                                  Package.PackageType.STATUS,
                                  "ok".encode('utf-8'))
