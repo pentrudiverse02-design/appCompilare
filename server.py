@@ -46,12 +46,11 @@ class Server:
             print(self.clients[addr]["request"])
             if self.clients[addr]["request"]["stay"] is False:
                 #facem in ascunse
-                if not os.path.exists( "AppCompilareServerDir/ascunse/"+self.clients[addr]["request"]["folderloc"] ):
-                    os.makedirs("AppCompilareServerDir/ascunse/"+self.clients[addr]["request"]["folderloc"])
+                self.clients[addr]["request"]["folderloc"] = "AppCompilareServerDir/ascunse/"+self.clients[addr]["request"]["folderloc"]
             else:
-                if not os.path.exists("AppCompilareServerDir/" + self.clients[addr]["request"]["folderloc"]):
-                    os.makedirs("AppCompilareServerDir/" + self.clients[addr]["request"]["folderloc"])
-
+                self.clients[addr]["request"]["folderloc"] = "AppCompilareServerDir/"+self.clients[addr]["request"]["folderloc"]
+            if not os.path.exists( self.clients[addr]["request"]["folderloc"] ):
+                os.makedirs(self.clients[addr]["request"]["folderloc"])
             await Package.WritePackage(self.clients[addr]["writerPipe"],
                                        Package.PackageType.STATUS,
                                        "ok".encode('utf-8'))
@@ -81,10 +80,10 @@ class Server:
     async def ReceiveZip(self, client):
         s=asyncio.StreamReader
         stream=self.clients[client]["readerPipe"]
-        for i in self.clients[client]["request"]["expected"]:
-            file = open(i)
+        for i in self.clients[client]["request"]["expected"].keys():
+            file = open(self.clients[client]["request"]["folderloc"] + i)
             while True:
-                stream.readexactly()
+                file.write(await stream.readexactly(self.clients[client]["request"]["expected"][i]))
 
     async def ReceiveErrors(self, client):
         pass

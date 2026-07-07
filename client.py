@@ -14,6 +14,8 @@ class Client:
     folderLocation = ""
     selectedZips = {} # aici am facut din simplu vector in dictionar,
                       # sa stiu exact cat trebuie sa primesc de la fiecare .zip in parte
+                    #in interiorul clientului o sa folosesc locatia completa pentru .zips
+                    #aceasta o sa trebuiasca sa fie stearsa pentru transmiterea ok la server
     socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     compileFor = CompilationType.RELEASE
     sysArhi = SystemArchitecture.x86_64
@@ -64,8 +66,8 @@ class Client:
 
     async def SendAFile(self):
         try:
-            async with asyncio.timeout(1000):
-                if self.writer is not None:
+            async with asyncio.timeout(1000000):
+                if self.writer is None:
                     print("nu avem stream pe care sa scriem")
                     return
                 for i in self.selectedZips.keys():
@@ -75,9 +77,10 @@ class Client:
                         if payload is None:
                             break
                         await Package.WritePackage(self.writer, Package.PackageType.UPLOAD_ZIP, payload)
-        finally:
+        except:
             print("timeout din sendfile")
 
 
-a = Client(CompilationType.DEBUG, SystemArchitecture.x86_64, True, 'client_1_Folder', ["p1C.zip"], "client1")
+a = Client(CompilationType.DEBUG, SystemArchitecture.x86_64, False, 'client_1_Folder', ["clientsFolder/p1C.zip"], "client1")
 asyncio.run(a.ConnectToServer())
+asyncio.run(a.SendAFile())
