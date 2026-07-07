@@ -15,6 +15,7 @@ class Server:
     SERVER=None
     def __init__(self):
         asyncio.run(self.CreateServer())
+
     async def CreateServer(self):
         self.SERVER = await asyncio.start_server(self.ClientHandle,self.server_host,self.server_port)
         addrs = ', '.join(str(sock.getsockname()) for sock in self.SERVER.sockets)
@@ -42,11 +43,13 @@ class Server:
                                  "ok".encode('utf-8'))
 
 
-
+#aici as vrea sa aflu cum pot sa fac o corutina sa fie intr un loop care ruleaza permanent, pana la oprire explicita
+#doresc sa fac o intrerupere pentru momentul in care o teava de read primeste ceva
+#insa nu am idee cum si nici nu am gasit altceva inafara de while True
     async def ClientHandle(self,reader:asyncio.StreamReader,writer:asyncio.StreamWriter):
         # if not self.clients.__contains__(writer.get_extra_info('peername')):
         #     await self.ClientConnect(writer.get_extra_info('peername'), reader,writer)
-
+        
         if not writer.get_extra_info('peername') in self.clients.keys():
             await self.ClientConnect(writer.get_extra_info('peername'), reader,writer)
 
