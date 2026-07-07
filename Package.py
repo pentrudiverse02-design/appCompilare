@@ -12,6 +12,7 @@ class PackageType(IntEnum):
     RESULT = 5
 HEADER_FORMAT = "!BI" # ! = little endian , B = Byte ,  I = Integer
 HEADER_SIZE= struct.calcsize(HEADER_FORMAT)
+PAYLOAD_SIZE=1024
 
 async def ReadPackage(reader: asyncio.StreamReader):
     header = await reader.read(HEADER_SIZE)
