@@ -23,7 +23,7 @@ class Server:
         addrs = ', '.join(str(sock.getsockname()) for sock in self.SERVER.sockets)
         print(f'Serving on {addrs}')
         if not os.path.exists("AppCompilareServerDir"):
-            os.makedirs("AppCompilareServerDir",mode=0o777)
+            os.makedirs("AppCompilareServerDir")
             os.makedirs("AppCompilareServerDir/ascunse")
         async with self.SERVER:
             await self.SERVER.serve_forever()
@@ -65,11 +65,18 @@ class Server:
             client = writer.get_extra_info('peername')
             if not client in self.clients.keys():
                 await self.ClientConnect(writer.get_extra_info('peername'), reader, writer)
-            header = await reader.readexactly(Package.HEADER_SIZE)
+            try:
+                header = await reader.readexactly(Package.HEADER_SIZE)
+            except (ConnectionError, ConnectionResetError, asyncio.IncompleteReadError) as e:
+                print(f"probleme la conexiune {e}")
+                break
+            #   aici am rezolvat provlema cu read 0 bytes out of 5
+            #   practic eu nu despachetam, nu facea match cu nimic, si trecea
+            #   la urmatoarea iteratie, unde conexiunea era inchise de client
+            header, length = struct.unpack( Package.HEADER_FORMAT , header)
             match header:
                 case Package.PackageType.UPLOAD_ZIP:
                     await self.ReceiveZip(client)
-
                 case Package.PackageType.GET_ERRORS:
                     await self.ReceiveErrors(client)
                 case Package.PackageType.DISCONNECT:
@@ -78,14 +85,19 @@ class Server:
 
 
     async def ReceiveZip(self, client):
-        s=asyncio.StreamReader
         stream=self.clients[client]["readerPipe"]
-        for i in self.clients[client]["request"]["expected"].keys():
-            file = open(self.clients[client]["request"]["folderloc"] + i)
+        for i in self.clients[client]["request"]["expected"]:
+            s=self.clients[client]["request"]["folderloc"] +'/'+ i
+            print(s)
+            file = open(s, 'wb')
             while True:
-                continut=await stream.readexactly(self.clients[client]["request"]["expected"][i])
-                await continut.drain()
+                dim=int(self.clients[client]["request"]["expected"][i])
+                continut=await stream.readexactly(dim)
+                #await continut.drain()
+                ##continut=continut.decode('utf-8')
                 file.write(continut)
+                print("am citit un fisier")
+                break
 
     async def ReceiveErrors(self, client):
         pass
