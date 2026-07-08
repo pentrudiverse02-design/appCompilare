@@ -45,11 +45,13 @@ class Server:
             print(s)
             print(self.clients[addr]["request"])
             if self.clients[addr]["request"]["stay"] == False:
-                #facem in ascunse
-                self.clients[addr]["request"]["folderloc"] = "AppCompilareServerDir/ascunse/"+self.clients[addr]["request"]["folderloc"]
+                # facem in ascunse
+                self.clients[addr]["request"]["folderloc"] = "AppCompilareServerDir/ascunse/" + \
+                                                             self.clients[addr]["request"]["folderloc"]
             else:
-                self.clients[addr]["request"]["folderloc"] = "AppCompilareServerDir/"+self.clients[addr]["request"]["folderloc"]
-            if not os.path.exists( self.clients[addr]["request"]["folderloc"] ):
+                self.clients[addr]["request"]["folderloc"] = "AppCompilareServerDir/" + self.clients[addr]["request"][
+                    "folderloc"]
+            if not os.path.exists(self.clients[addr]["request"]["folderloc"]):
                 os.makedirs(self.clients[addr]["request"]["folderloc"])
             await Package.WritePackage(self.clients[addr]["writerPipe"],
                                        Package.PackageType.STATUS,
@@ -73,7 +75,7 @@ class Server:
             #   aici am rezolvat provlema cu read 0 bytes out of 5
             #   practic eu nu despachetam, nu facea match cu nimic, si trecea
             #   la urmatoarea iteratie, unde conexiunea era inchise de client
-            header, length = struct.unpack( Package.HEADER_FORMAT , header)
+            header, length = struct.unpack(Package.HEADER_FORMAT, header)
             match header:
                 case Package.PackageType.UPLOAD_ZIP:
                     await self.ReceiveZip(client)
@@ -82,22 +84,20 @@ class Server:
                 case Package.PackageType.DISCONNECT:
                     await self.Disconnect(client)
 
-
-
     async def ReceiveZip(self, client):
-        stream=self.clients[client]["readerPipe"]
+        stream = self.clients[client]["readerPipe"]
         for i in self.clients[client]["request"]["expected"]:
-            s=self.clients[client]["request"]["folderloc"] +'/'+ i
+            s = self.clients[client]["request"]["folderloc"] + '/' + i
             print(s)
             file = open(s, 'wb')
-            while True:
-                dim=int(self.clients[client]["request"]["expected"][i])
-                continut=await stream.readexactly(dim)
-                #await continut.drain()
-                ##continut=continut.decode('utf-8')
-                file.write(continut)
-                print("am citit un fisier")
-                break
+            #while True:
+            dim = int(self.clients[client]["request"]["expected"][i])
+            continut = await stream.readexactly(dim)
+            # await continut.drain()
+            ##continut=continut.decode('utf-8')
+            file.write(continut)
+            break
+            #aici o sa doresc sa-l despachetez
 
     async def ReceiveErrors(self, client):
         pass
