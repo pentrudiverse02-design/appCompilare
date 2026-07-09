@@ -6,6 +6,7 @@ class PackageType(IntEnum):
     UPLOAD_ZIP = 1
     GET_LOGS = 2
     STATUS = 3
-    GET_ERRORS = 4
+    DOWNLOAD_ZIP = 4
     RESULT = 5
     DISCONNECT = 6
+    ERROR = 7

@@ -1,11 +1,10 @@
 import json
 import os.path
-import socket
 import asyncio
 import struct
-import sys
+from Package import *
+from PackageType import *
 
-import Package
 from compilType import CompilationType
 from sysArhitecture import SystemArchitecture
 
@@ -19,7 +18,6 @@ class Client:
     # sa stiu exact cat trebuie sa primesc de la fiecare .zip in parte
     # in interiorul clientului o sa folosesc locatia completa pentru .zips
     # aceasta o sa trebuiasca sa fie stearsa pentru transmiterea ok la server
-    socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     compileFor = CompilationType.RELEASE
     sysArhi = SystemArchitecture.x86_64
     stayInServer = False
@@ -53,16 +51,30 @@ class Client:
     async def ConnectToServer(self):
         self.reader, self.writer = await asyncio.open_connection("127.0.0.1", 8008)
         print(f'Send: ')
-        await Package.WritePackage(self.writer, Package.PackageType.LOGIN_CREDENTIALS, self.GetClientData())
-        type, data = await Package.ReadPackage(self.reader)
-        if type == Package.PackageType.STATUS and data.decode('utf-8') == "ok":
-            print("CONECTAT CU SERVER-ul")
-            await asyncio.gather(
-                # self.SendAFile(),
-                self.Disconect()
-            )
-        else:
-            print("serverul nu ne da voie sa ne conectam la el.")
+        await WritePackage(self.writer, PackageType.LOGIN_CREDENTIALS, self.GetClientData())
+        await self.ReceiveStreamHandle()
+    # aici o sa trebuiasca sa fac un handle pentru expirarea timpului de conexiune si o err
+        # packtype, payload = await ReadPackage(self.reader)
+        # if packtype == PackageType.STATUS and payload.decode('utf-8') == "ok":
+        #     print("CONECTAT CU SERVER-ul")
+        #     await asyncio.gather(
+        #         # self.SendAFile(),
+        #         self.Disconect()
+        #     )
+        # else:
+        #     print("serverul nu ne da voie sa ne conectam la el.")
+
+
+    async def ReceiveStreamHandle(self):
+        while True:
+            packtype, payload = await ReadPackage(self.reader)
+            match packtype:
+                case PackageType.STATUS:
+                    print(f"{payload.decode('utf-8')}")
+                case PackageType.DOWNLOAD_ZIP:
+                    pass
+                case PackageType.DISCONNECT:
+                    pass
 
     def ConstructZipDict(self, Zips):
         for i in Zips:
@@ -81,7 +93,7 @@ class Client:
                 if payload is None:
                     print("payload none")
                     break
-                header = struct.pack(Package.HEADER_FORMAT, int(Package.PackageType.UPLOAD_ZIP), len(payload))
+                header = struct.pack(HEADER_FORMAT, int(PackageType.UPLOAD_ZIP), len(payload))
                 self.writer.write(header + payload)
                 await self.writer.drain()
                 print("am trimis zip ul")
@@ -96,7 +108,7 @@ async def main():
     a = Client(CompilationType.DEBUG, SystemArchitecture.x86_64, False, 'client_1_Folder', ["clientsFolder/p1C.zip"],
                "client1")
     await a.ConnectToServer()
-    await a.SendAFile()
+
 
 
 if __name__ == "__main__":
