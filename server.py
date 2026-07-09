@@ -5,6 +5,7 @@ import struct
 
 from Package import *
 from PackageType import *
+from zips import ZipClass
 
 
 class Server:
@@ -22,61 +23,48 @@ class Server:
         self.SERVER = await asyncio.start_server(self.ReceiveStreamHandle, self.server_host, self.server_port)
         addrs = ', '.join(str(sock.getsockname()) for sock in self.SERVER.sockets)
         print(f'Serving on {addrs}')
-        if not os.path.exists("AppCompilareServerDir"):
-            os.makedirs("AppCompilareServerDir")
-            os.makedirs("AppCompilareServerDir/ascunse")
+        if not os.path.exists(self.folderServer + "AppCompilareServerDir"):
+            os.makedirs(self.folderServer + "AppCompilareServerDir")
+            os.makedirs(self.folderServer + "AppCompilareServerDir/ascunse")
         async with self.SERVER:
             await self.SERVER.serve_forever()
 
+
     async def ClientConnect(self, addr, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
-        # aici o sa pun noua implementare din Package
-        # header = await reader.readexactly(Package.HEADER_SIZE)
-        # mestype, lungimeData = struct.unpack(HEADER_FORMAT, header)
         packtype, payload = await ReadPackage(reader)
-        # aici am modificat pentru packageType
         if packtype != PackageType.LOGIN_CREDENTIALS:
             s = f"draga {addr}, trimite mi creditentialele tale".encode('utf-8')
-            # await Package.WritePackage(writer, Package.PackageType.GET_ERRORS, s)
             await WritePackage(writer, PackageType.ERROR, s)
             return
-        # data = await ReadPackageContent(reader)
-        # data = data.decode('utf-8')
-        # data = await reader.readexactly(lungimeData)
-        # data = json.loads(data.decode('utf-8'))
-        self.clients[addr] = {"readerPipe": reader,
-                              "writerPipe": writer,
-                              "request": json.loads(payload.decode('utf-8'))}
-        if addr in self.clients.keys():
-            s = f"am primit de la tine {addr} datele {self.clients[addr]}"
-            print(s)
-            print(self.clients[addr]["request"])
-            if not self.clients[addr]["request"]["stay"]:
-                # facem in ascunse
-                self.clients[addr]["request"]["folderloc"] = "AppCompilareServerDir/ascunse/" + \
-                                                             self.clients[addr]["request"]["folderloc"]
-            else:
-                self.clients[addr]["request"]["folderloc"] = "AppCompilareServerDir/" + self.clients[addr]["request"][
-                    "folderloc"]
-            if not os.path.exists(self.clients[addr]["request"]["folderloc"]):
-                os.makedirs(self.clients[addr]["request"]["folderloc"])
-            await WritePackage(self.clients[addr]["writerPipe"],
-                               PackageType.STATUS,
-                               "ok".encode('utf-8'))
+        client = json.loads(payload.decode('utf-8'))
+        client["reader"] = reader
+        client["writer"] = writer
+        self.clients[addr] = client
+        if addr not in self.clients.keys():
+            print("nu l am pus in server.clients")
+            exit(f"a pocnit din server ClientConnect la utilizator:{addr}")
+
+        print(f"am primit de la tine {addr} datele {self.clients[addr]}")
+        if not self.clients[addr]["stay"]:
+            locationComplition = "AppCompilareServerDir/ascunse/"
+        else:
+            locationComplition = "AppCompilareServerDir/"
+        self.clients[addr]["folder"] = (self.folderServer +
+                                        locationComplition +
+                                        str(addr))
+        if not os.path.exists(self.clients[addr]["folder"]):
+            os.makedirs(self.clients[addr]["folder"])
+        self.clients[addr]["zip"]=ZipClass(writer,reader,self.clients[addr]["folder"])
+        await WritePackage(self.clients[addr]["writer"],
+                           PackageType.STATUS,
+                           "ok".encode('utf-8'))
 
     async def ReceiveStreamHandle(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
-        # if not self.clients.__contains__(writer.get_extra_info('peername')):
-        #     await self.ClientConnect(writer.get_extra_info('peername'), reader,writer)
         while True:
             client = writer.get_extra_info('peername')
             if not client in self.clients.keys():
                 await self.ClientConnect(writer.get_extra_info('peername'), reader, writer)
-            ## toate comment urile de mai jos sunt pentru a citi tipul de packet, redundant
-            # try:
-            #     header = await reader.readexactly(Package.HEADER_SIZE)
-            # except (ConnectionError, ConnectionResetError, asyncio.IncompleteReadError) as e:
-            #     print(f"probleme la conexiune {e}")
-            #     break
-            # header, length = struct.unpack(Package.HEADER_FORMAT, header)
+
             header, lenght = await ReadPackagetType(reader)
 
             match header:
@@ -85,26 +73,13 @@ class Server:
                 case PackageType.ERROR:
                     pass
                 case PackageType.SELECTED_ZIPS:
-                    zipsToReceive = await GetPackageContent(reader, lenght)
-                    self.clients['request']['expected']=zipsToReceive
+                    payload = GetPackageContent(reader, lenght)
+                    #ZipToReceive(json.loads(payload.decode('utf-8')))
                 case PackageType.DISCONNECT:
                     pass
 
     async def ReceiveZip(self, client):
         pass
-# stream = self.clients[client]["readerPipe"]
-# for i in self.clients[client]["request"]["expected"]:
-#     s = self.clients[client]["request"]["folderloc"] + '/' + i
-#     print(s)
-#     file = open(s, 'wb')
-#     # while True:
-#     dim = int(self.clients[client]["request"]["expected"][i])
-#     continut = await stream.readexactly(dim)
-#     await continut.drain()
-#     ##continut=continut.decode('utf-8')
-#     file.write(continut)
-#
-#     # aici o sa doresc sa-l despachetez
 
 
 a = Server()
