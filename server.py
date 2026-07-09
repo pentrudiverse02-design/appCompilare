@@ -43,8 +43,6 @@ class Server:
         if addr not in self.clients.keys():
             print("nu l am pus in server.clients")
             exit(f"a pocnit din server ClientConnect la utilizator:{addr}")
-
-        print(f"am primit de la tine {addr} datele {self.clients[addr]}")
         if not self.clients[addr]["stay"]:
             locationComplition = "AppCompilareServerDir/ascunse/"
         else:
@@ -58,6 +56,7 @@ class Server:
         await WritePackage(self.clients[addr]["writer"],
                            PackageType.STATUS,
                            "ok".encode('utf-8'))
+        print(f"am primit de la tine {addr} datele {self.clients[addr]}")
 
     async def ReceiveStreamHandle(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
         while True:

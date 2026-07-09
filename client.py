@@ -13,32 +13,32 @@ from zips import ZipClass
 class Client:
     serverCon = "127.0.0.1", 8008
     writer, reader = asyncio.StreamWriter, asyncio.StreamReader
-    zipsList = []
-    zipsDict = {}  # aici am facut din simplu vector in dictionar,
-    # sa stiu exact cat trebuie sa primesc de la fiecare .zip in parte
-    # in interiorul clientului o sa folosesc locatia completa pentru .zips
-    # aceasta o sa trebuiasca sa fie stearsa pentru transmiterea ok la server
     compileFor = CompilationType.RELEASE
     sysArhi = SystemArchitecture.x86_64
     stayInServer = False
+    zipsList = []
+    zipsDict = {}  # aici am facut din simplu vector in dictionar,
+
+    # sa stiu exact cat trebuie sa primesc de la fiecare .zip in parte
+    # in interiorul clientului o sa folosesc locatia completa pentru .zips
+    # aceasta o sa trebuiasca sa fie stearsa pentru transmiterea ok la server
 
     def __init__(self,
                  compileType: CompilationType,
                  systemArchi: SystemArchitecture,
                  stay: bool,
                  folder: str,
-                 Zips  # aici trebuie sa fie de tip [string, string, etc]
+                 zipsList  # aici trebuie sa fie de tip [string, string, etc]
                  ):
         self.compileFor = compileType
         self.sysArhi = systemArchi
         self.stayInServer = stay
         self.folderLocation = folder
-        self.ConstructZipDict(Zips)
+        self.zipsList = zipsList
+        self.ConstructZipDict()
         self.ZIP = None
 
     def GetClientData(self):
-        v = self.zipsList
-        self.zipsDict = {k.split('/')[-1]: val for k, val in self.zipsList}
         dataJson = {"compileFor": int(self.compileFor),
                     "sysArhi": int(self.sysArhi),
                     "stay": self.stayInServer}
@@ -68,10 +68,12 @@ class Client:
                     self.ZIP.GetZip()
                 case PackageType.DISCONNECT:
                     pass
+    async def SendZips(self):
+        await self.ZIP.SendZip()
 
-    def ConstructZipDict(self, Zips):
-        for i in Zips:
-            self.zipsDict[i] = os.path.getsize(i)
+    def ConstructZipDict(self):
+        for i in self.zipsList:
+            self.zipsDict[str(i)] = os.path.getsize(i)
 
     async def Disconect(self):
         pass
@@ -85,6 +87,10 @@ async def main():
                ["clientsFolder/p1C.zip"]
                )
     await a.ConnectToServer()
+    while True:
+        c=input("introduceti 2 pentru a transmite un zip")
+        if int(c) == 2:
+            await a.SendZips()
 
 
 if __name__ == "__main__":
