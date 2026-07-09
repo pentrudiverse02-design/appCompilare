@@ -7,6 +7,7 @@ from PackageType import *
 
 from compilType import CompilationType
 from sysArhitecture import SystemArchitecture
+from zips import ZipClass
 
 
 class Client:
@@ -36,6 +37,7 @@ class Client:
         self.folderLocation = folder
         self.ConstructZipDict(Zips)
         self.numeClient = nume
+        self.ZIP=None
 
     def GetClientData(self):
         v = self.selectedZips
@@ -51,28 +53,37 @@ class Client:
     async def ConnectToServer(self):
         self.reader, self.writer = await asyncio.open_connection("127.0.0.1", 8008)
         print(f'Send: ')
+        self.ZIP=ZipClass(self.writer,self.reader, "clientsFolder" )
+        #selectedZips trebuie sa fie construit
+        self.ZIP.ZipsToSend(self.selectedZips)
         await WritePackage(self.writer, PackageType.LOGIN_CREDENTIALS, self.GetClientData())
         await self.ReceiveStreamHandle()
-    # aici o sa trebuiasca sa fac un handle pentru expirarea timpului de conexiune si o err
-        # packtype, payload = await ReadPackage(self.reader)
-        # if packtype == PackageType.STATUS and payload.decode('utf-8') == "ok":
-        #     print("CONECTAT CU SERVER-ul")
-        #     await asyncio.gather(
-        #         # self.SendAFile(),
-        #         self.Disconect()
-        #     )
-        # else:
-        #     print("serverul nu ne da voie sa ne conectam la el.")
 
+    # aici o sa trebuiasca sa fac un handle pentru expirarea timpului de conexiune si o err
+    # packtype, payload = await ReadPackage(self.reader)
+    # if packtype == PackageType.STATUS and payload.decode('utf-8') == "ok":
+    #     print("CONECTAT CU SERVER-ul")
+    #     await asyncio.gather(
+    #         # self.SendAFile(),
+    #         self.Disconect()
+    #     )
+    # else:
+    #     print("serverul nu ne da voie sa ne conectam la el.")
 
     async def ReceiveStreamHandle(self):
         while True:
-            packtype, payload = await ReadPackage(self.reader)
-            match packtype:
+            header, lenght = await ReadPackagetType(self.reader)
+            # packtype, payload = await ReadPackage(self.reader)
+            # match packtype:
+            match header:
                 case PackageType.STATUS:
+                    payload=GetPackageContent(self.reader,lenght)
                     print(f"{payload.decode('utf-8')}")
-                case PackageType.DOWNLOAD_ZIP:
-                    pass
+                case PackageType.SELECTED_ZIPS:
+                    payload=GetPackageContent(self.reader,lenght)
+                    self.ZIP.ZipToReceive(json.loads(payload.decode('utf-8')))
+                case PackageType.ZIP:
+                    self.ZIP.GetZip()
                 case PackageType.DISCONNECT:
                     pass
 
@@ -93,7 +104,7 @@ class Client:
                 if payload is None:
                     print("payload none")
                     break
-                header = struct.pack(HEADER_FORMAT, int(PackageType.UPLOAD_ZIP), len(payload))
+                header = struct.pack(HEADER_FORMAT, int(PackageType.ZIP), len(payload))
                 self.writer.write(header + payload)
                 await self.writer.drain()
                 print("am trimis zip ul")
@@ -108,7 +119,6 @@ async def main():
     a = Client(CompilationType.DEBUG, SystemArchitecture.x86_64, False, 'client_1_Folder', ["clientsFolder/p1C.zip"],
                "client1")
     await a.ConnectToServer()
-
 
 
 if __name__ == "__main__":

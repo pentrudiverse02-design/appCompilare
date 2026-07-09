@@ -19,7 +19,7 @@ class Server:
         asyncio.run(self.CreateServer())
 
     async def CreateServer(self):
-        self.SERVER = await asyncio.start_server(self.ClientHandle, self.server_host, self.server_port)
+        self.SERVER = await asyncio.start_server(self.ReceiveStreamHandle, self.server_host, self.server_port)
         addrs = ', '.join(str(sock.getsockname()) for sock in self.SERVER.sockets)
         print(f'Serving on {addrs}')
         if not os.path.exists("AppCompilareServerDir"):
@@ -63,7 +63,7 @@ class Server:
                                PackageType.STATUS,
                                "ok".encode('utf-8'))
 
-    async def ClientHandle(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
+    async def ReceiveStreamHandle(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
         # if not self.clients.__contains__(writer.get_extra_info('peername')):
         #     await self.ClientConnect(writer.get_extra_info('peername'), reader,writer)
         while True:
@@ -77,34 +77,34 @@ class Server:
             #     print(f"probleme la conexiune {e}")
             #     break
             # header, length = struct.unpack(Package.HEADER_FORMAT, header)
-            try:
-                header = await ReadPackagetType(reader)
-            except (ConnectionError, ConnectionResetError, asyncio.IncompleteReadError) as e:
-                print(f"probleme la {e}")
-                print("trebuie deconectat")
-                break
+            header, lenght = await ReadPackagetType(reader)
+
             match header:
-                case PackageType.UPLOAD_ZIP:
+                case PackageType.ZIP:
                     await self.ReceiveZip(client)
-                case PackageType.GET_ERRORS:
+                case PackageType.ERROR:
                     pass
+                case PackageType.SELECTED_ZIPS:
+                    zipsToReceive = await GetPackageContent(reader, lenght)
+                    self.clients['request']['expected']=zipsToReceive
                 case PackageType.DISCONNECT:
                     pass
 
     async def ReceiveZip(self, client):
-        stream = self.clients[client]["readerPipe"]
-        for i in self.clients[client]["request"]["expected"]:
-            s = self.clients[client]["request"]["folderloc"] + '/' + i
-            print(s)
-            file = open(s, 'wb')
-            # while True:
-            dim = int(self.clients[client]["request"]["expected"][i])
-            continut = await stream.readexactly(dim)
-            await continut.drain()
-            ##continut=continut.decode('utf-8')
-            file.write(continut)
-            break
-            # aici o sa doresc sa-l despachetez
+        pass
+# stream = self.clients[client]["readerPipe"]
+# for i in self.clients[client]["request"]["expected"]:
+#     s = self.clients[client]["request"]["folderloc"] + '/' + i
+#     print(s)
+#     file = open(s, 'wb')
+#     # while True:
+#     dim = int(self.clients[client]["request"]["expected"][i])
+#     continut = await stream.readexactly(dim)
+#     await continut.drain()
+#     ##continut=continut.decode('utf-8')
+#     file.write(continut)
+#
+#     # aici o sa doresc sa-l despachetez
 
 
 a = Server()

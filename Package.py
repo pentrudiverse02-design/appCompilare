@@ -9,8 +9,10 @@ PAYLOAD_SIZE = 1024
 
 async def ReadPackageHeader(reader: asyncio.StreamReader):
     header = await reader.read(HEADER_SIZE)
-    typep, lenght = struct.unpack(HEADER_FORMAT, header)
-    return typep, lenght
+    typep, length = struct.unpack(HEADER_FORMAT, header)
+    return typep, length
+# dupa aceasta functie trebuie musai folosit GetPackageContent,
+# intrucat avem deja citit de pe reader headerul, atentie mare
 
 
 async def ReadPackage(reader: asyncio.StreamReader):
@@ -20,25 +22,30 @@ async def ReadPackage(reader: asyncio.StreamReader):
         print(f"probleme la {e}")
         print("trebuie deconectat")
         exit("nu am citit ceva bine")
-    typep, lenght = struct.unpack(HEADER_FORMAT, header)
-    payload = await reader.readexactly(int(lenght))
+    typep, length = struct.unpack(HEADER_FORMAT, header)
+    payload = await reader.readexactly(int(length))
     return typep, payload
 
+#
+# async def ReadPackageContent(reader: asyncio.StreamReader) -> bytes:
+#     try:
+#         a, b = await ReadPackageHeader(reader)
+#     except (ConnectionError, ConnectionResetError, asyncio.IncompleteReadError) as e:
+#         print(f"probleme la {e}")
+#         print("trebuie deconectat")
+#         exit("nu am citit ceva bine")
+#     content = await reader.readexactly(int(b))
+#     # aparent .drain() funcitoneaza doar pentru scriere, in rest nu si are locul
+#     # await content.drain()
+#     return content
 
-async def ReadPackageContent(reader: asyncio.StreamReader) -> bytes:
-    try:
-        a, b = await ReadPackageHeader(reader)
-    except (ConnectionError, ConnectionResetError, asyncio.IncompleteReadError) as e:
-        print(f"probleme la {e}")
-        print("trebuie deconectat")
-        exit("nu am citit ceva bine")
-    content = await reader.readexactly(int(b))
+async def GetPackageContent(reader:asyncio.StreamReader, dim:int) -> bytes:
+    content = await reader.readexactly(dim)
     # aparent .drain() funcitoneaza doar pentru scriere, in rest nu si are locul
     # await content.drain()
     return content
 
-
-async def ReadPackagetType(reader: asyncio.StreamReader) -> PackageType:
+async def ReadPackagetType(reader: asyncio.StreamReader) :
     try:
         header = await reader.read(HEADER_SIZE)
     except (ConnectionError, ConnectionResetError, asyncio.IncompleteReadError) as e:
@@ -48,20 +55,20 @@ async def ReadPackagetType(reader: asyncio.StreamReader) -> PackageType:
     typep, lenght = struct.unpack(HEADER_FORMAT, header)
     # return  typep.decode('utf-8')
     # aici nu cred ca e nevoie de decode, unpack face decodarea in format target
-    return typep
+    return typep, lenght
 
-
-async def GetPackageSize(reader: asyncio.StreamReader) -> int:
-    try:
-        header = await reader.readexactly(HEADER_SIZE)
-    except (ConnectionError, ConnectionResetError, asyncio.IncompleteReadError) as e:
-        print(f"probleme la {e}")
-        print("trebuie deconectat")
-        exit("nu am citit ceva bine")
-    typep, lenght = struct.unpack(HEADER_FORMAT, header)
-    # return  int(lenght.decode('utf-8'))
-    # si aici ca ma sus
-    return int(lenght)
+## mai bine se foloseste ReadPackageHeader
+# async def GetPackageSize(reader: asyncio.StreamReader) -> int:
+#     try:
+#         header = await reader.readexactly(HEADER_SIZE)
+#     except (ConnectionError, ConnectionResetError, asyncio.IncompleteReadError) as e:
+#         print(f"probleme la {e}")
+#         print("trebuie deconectat")
+#         exit("nu am citit ceva bine")
+#     typep, length = struct.unpack(HEADER_FORMAT, header)
+#     # return  int(lenght.decode('utf-8'))
+#     # si aici ca ma sus
+#     return int(length)
 
 
 async def WritePackage(writer: asyncio.StreamWriter,
