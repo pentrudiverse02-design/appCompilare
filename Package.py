@@ -17,17 +17,24 @@ class Package:
     @staticmethod
     async def ReadPackageContent(reader: asyncio.StreamReader) -> bytes:
         a,b= await Package.ReadPackage(reader)
-        return b
+        content = await reader.readexactly(int(b))
+        return content
     @staticmethod
     async def ReadPackagetType(reader: asyncio.StreamReader )-> PackageType:
         header = await reader.read(HEADER_SIZE)
         typep, lenght = struct.unpack(HEADER_FORMAT, header)
-        return  typep.decode('utf-8')
+        #return  typep.decode('utf-8')
+        #aici nu cred ca e nevoie de decode, unpack face decodarea in format target
+        return typep
+
     @staticmethod
     async def GetPackageSize(reader: asyncio.StreamReader ) -> int:
         header = await reader.readexactly(HEADER_SIZE)
         typep, lenght = struct.unpack(HEADER_FORMAT, header)
-        return  int(lenght.decode('utf-8'))
+        # return  int(lenght.decode('utf-8'))
+        #si aici ca ma sus
+        return int(lenght)
+
     @staticmethod
     async def WritePackage(writer: asyncio.StreamWriter,
                            messageType: PackageType,
