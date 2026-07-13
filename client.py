@@ -23,10 +23,10 @@ class Client:
     stayInServer = False
     zipsList = []
     zipsDict = {}  # aici am facut din simplu vector in dictionar,
+
     # sa stiu exact cat trebuie sa primesc de la fiecare .zip in parte
     # in interiorul clientului o sa folosesc locatia completa pentru .zips
     #   acest lucru se va face construind complet in momentul respectiv cu self.folderLocation
-
 
     def __init__(self,
                  compileType: CompilationType,
@@ -43,13 +43,11 @@ class Client:
         self.ConstructZipDict()
         self.ZIP = None
 
-
     def GetClientData(self):
         dataJson = {"compileFor": int(self.compileFor),
                     "sysArhi": int(self.sysArhi),
                     "stay": self.stayInServer}
         return json.dumps(dataJson).encode('utf-8')
-
 
     async def ConnectToServer(self):
         self.reader, self.writer = await asyncio.open_connection("127.0.0.1", 8008)
@@ -58,7 +56,6 @@ class Client:
         self.ZIP = ZipClass(self.writer, self.reader, "clientsFolder")
         # selectedZips trebuie sa fie construit
         self.ZIP.ZipsToSend(self.zipsDict)
-
 
     async def ReceiveStreamHandle(self):
         while True:
@@ -81,22 +78,18 @@ class Client:
                 case PackageType.DISCONNECT:
                     pass
 
-
     async def SendZips(self):
         await self.ZIP.SendZip()
 
-
     def ConstructZipDict(self):
         for i in self.zipsList:
-            sizee = os.path.getsize( 'clientsFolder/' + i)
+            sizee = os.path.getsize('clientsFolder/' + i)
             self.zipsDict[str(i)] = sizee
-
 
     async def Disconect(self):
         pass
 
-
-    async def InputStreamHandle(self,tg):
+    async def InputStreamHandle(self, tg):
         while True:
             # 1. SCHIMBARE CRITICĂ: to_thread lasă bucla asincronă să ruleze în fundal
             meniu = ("introduceti ce doriti: \n"
@@ -139,6 +132,7 @@ async def main():
         await a.InputStreamHandle(tg)
     # await a.ConnectToServer()
     # await a.SendZips()
+
 
 if __name__ == "__main__":
     try:

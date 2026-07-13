@@ -29,7 +29,6 @@ class Server:
         async with self.SERVER:
             await self.SERVER.serve_forever()
 
-
     async def ClientConnect(self, addr, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
         packtype, payload = await ReadPackage(reader)
         if packtype != PackageType.LOGIN_CREDENTIALS:
@@ -53,7 +52,7 @@ class Server:
                                         str(addr))
         if not os.path.exists(self.clients[addr]["folder"]):
             os.makedirs(self.clients[addr]["folder"])
-        self.clients[addr]["zip"]=ZipClass(writer,reader,self.clients[addr]["folder"])
+        self.clients[addr]["zip"] = ZipClass(writer, reader, self.clients[addr]["folder"])
         await WritePackage(self.clients[addr]["writer"],
                            PackageType.STATUS,
                            "ok".encode('utf-8'))
@@ -79,10 +78,9 @@ class Server:
                     payload = payload.decode('utf-8')
                     print(payload)
                     self.clients[client]["zip"].ZipsToReceive(payload)
-                    #ZipToReceive(json.loads(payload.decode('utf-8')))
+                    # ZipToReceive(json.loads(payload.decode('utf-8')))
                 case PackageType.DISCONNECT:
                     pass
-
 
     async def ReceiveZip(self, client):
         await self.clients[client]["zip"].GetZip()
