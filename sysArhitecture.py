@@ -1,6 +1,7 @@
-from enum import Enum
+from enum import IntEnum
 
-class SystemArchitecture(Enum):
-    x86_64=1
-    arm64=2
-    aarch_64=3
+
+class SystemArchitecture(IntEnum):
+    x86_64 = 1
+    arm64 = 2
+    aarch_64 = 3

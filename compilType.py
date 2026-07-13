@@ -1,6 +1,7 @@
-from enum import Enum
+from enum import IntEnum
 
-class CompilationType(Enum):
-    RELEASE=1
-    DEBUG=2
-    LIBRARY=3
+
+class CompilationType(IntEnum):
+    RELEASE = 1
+    DEBUG = 2
+    LIBRARY = 3
