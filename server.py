@@ -42,7 +42,8 @@ class Server:
         self.clients[addr] = client
         if addr not in self.clients.keys():
             print("nu l am pus in server.clients")
-            exit(f"a pocnit din server ClientConnect la utilizator:{addr}")
+            print(f"a pocnit din server ClientConnect la utilizator:{addr}")
+            exit()
         if not self.clients[addr]["stay"]:
             locationComplition = "AppCompilareServerDir/ascunse/"
         else:
@@ -60,25 +61,31 @@ class Server:
 
     async def ReceiveStreamHandle(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
         while True:
+            # if reader.at_eof():
+            #     print("sunt la client, conectiune inchisa")
+            #     exit()
             client = writer.get_extra_info('peername')
             if not client in self.clients.keys():
                 await self.ClientConnect(writer.get_extra_info('peername'), reader, writer)
-
-            header, lenght = await ReadPackagetType(reader)
-
+                continue
+            header, lenght = await ReadPackagetTypeAndLength(reader)
             match header:
                 case PackageType.ZIP:
                     await self.ReceiveZip(client)
                 case PackageType.ERROR:
                     pass
                 case PackageType.SELECTED_ZIPS:
-                    payload = GetPackageContent(reader, lenght)
+                    payload = await GetPackageContent(reader, lenght)
+                    payload = payload.decode('utf-8')
+                    print(payload)
+                    self.clients[client]["zip"].ZipsToReceive(payload)
                     #ZipToReceive(json.loads(payload.decode('utf-8')))
                 case PackageType.DISCONNECT:
                     pass
 
+
     async def ReceiveZip(self, client):
-        pass
+        await self.clients[client]["zip"].GetZip()
 
 
 a = Server()
