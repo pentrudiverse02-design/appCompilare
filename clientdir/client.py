@@ -1,5 +1,8 @@
+import asyncio
 import json
 import os.path
+from importlib.metadata import requires
+from pathlib import Path
 
 from comune.Package import *
 from comune.PackageType import *
@@ -28,14 +31,23 @@ class Client:
                  systemArchi: SystemArchitecture,
                  stay: bool,
                  folder: str,
-                 zipsList  # aici trebuie sa fie de tip [string, string, etc]
+                 # am scos zipList de aici, NU o sa mai fie transmis ca parametru, o sa
+                 # se citeasca automat .zip din folderul clientului.
+                 #
+                 # acest folder o sa se contruieasca din client-run.sh
+                 # in locatia clientdir/clientsFolder/NUME_FOLDER_GENERAT
+                 # si o sa l populeze cu .zip din folderul ZipsToBorrow
+                 # 
+                 # zipsList  # aici trebuie sa fie de tip [string, string, etc]
+                 # 
                  ):
         self.compileFor = compileType
         self.sysArhi = systemArchi
         self.stayInServer = stay
-        self.folderLocation = folder
-        self.zipsList = zipsList
-        self.ConstructZipDict()
+        self.folderLocation = "clientdir/clientsFolder/" + folder
+        self.ConstructZipList()
+        # self.zipsList
+        # self.ConstructZipDict()
         self.ZIP = None
 
     def GetClientData(self):
@@ -76,13 +88,24 @@ class Client:
     async def SendZips(self):
         await self.ZIP.SendZip()
 
-    def ConstructZipDict(self):
-        for i in self.zipsList:
-            sizee = os.path.getsize('clientsFolder/' + i)
-            self.zipsDict[str(i)] = sizee
+    def ConstructZipList(self):
+        sources=Path(self.folderLocation)
+        files = sources.iterdir()
+        for i in files:
+            self.zipsList=i.name
+            self.zipsDict[i]=os.path.getsize(i)
+    # def ConstructZipDict(self):
+    #     for i in self.zipsList:
+    #         sizee = os.path.getsize('clientsFolder/' + i)
+    #         self.zipsDict[str(i)] = sizee
 
     async def Disconect(self):
-        pass
+        await WritePackage(self.writer,PackageType.DISCONNECT,None)
+        if self.writer.
+        self.writer.close()
+        await self.writer.wait_closed()
+        self.writer=None
+        self.reader=None
 
     async def InputStreamHandle(self, tg):
         while True:
@@ -114,6 +137,45 @@ class Client:
                 case _:
                     print("\n\na fost introdus ceva ce nu ne asteaptam in InputStreamHandle\n")
 
+
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parse = argparse.ArgumentParser(
+        description="this is a Client app that can send .zip files to be compiled on a server "
+                    "and receive the binaries, executables, or just the output"
+    )
+    parse.add_argument(
+        "-comp", "-compile", metavar="compileType",
+        required=True, choices=["RELEASE", "DEBUG", "LIBRARY"],
+        help="this passes the compilation type for the files. DO NOT PASS A main() function FOR LIBRARY"
+    )
+    parse.add_argument(
+        "-arhi", "-arhitecture", metavar="systemArhitecture",
+        required=True, choices=["x86_64", "arm64", "aarch_64"],
+        help="this passes the target's computer arhitecture, Default is x86_64"
+    )
+    parse.add_argument(
+        "-stay", "-stay", metavar="stay in server",
+        required=True, choices=[False, True],
+        help="this parameter tells the server if you wish the compiled files to stay in server or not"
+    )
+    parse.add_argument(
+        "-folder", "-folder", metavar="folder", required=True,
+        help="how do you wish to clients folder to be named"
+    )
+    args = parse.parse_args()
+    client = Client(
+        CompilationType(args.compile),
+        SystemArchitecture(args.arhitecture),
+        args.stay,
+        args.folder
+    )
+    asyncio.run(client.ConnectToServer())
+    asyncio.run(client.SendZips())
+    asyncio.run(client.Disconect())
 
 # async def main():
 #     a = Client(CompilationType.DEBUG,

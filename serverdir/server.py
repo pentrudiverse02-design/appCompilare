@@ -100,5 +100,4 @@ if __name__ == '__main__':
         server=Server(args.port)
     else:
         server=Server()
-    # print(args.port)
-    # print(f"Server is on: ({server.server_host}, {server.server_port})")
+    # print(args.port)on: ({server.server_host}, {server.server_port})")
