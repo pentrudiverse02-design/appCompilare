@@ -1,8 +1,9 @@
+import asyncio
 import json
-import os.path
+import os
 
-from comune.Package import *
-from comune.PackageType import *
+from comune import PackageType
+from comune.Package import ReadPackage, WritePackage, ReadPackagetTypeAndLength, GetPackageContent
 from comune.zips import ZipClass
 
 
@@ -10,11 +11,12 @@ class Server:
     clients = {}
     server_host = '127.0.0.1'
     server_port = 8008
-    folderServer = ''
+    folderServer = 'serverdir/'
     maxConnections = 0
     SERVER = None
 
-    def __init__(self):
+    def __init__(self, port = 8008):
+        self.server_port = port
         asyncio.run(self.CreateServer())
 
     async def CreateServer(self):
@@ -84,4 +86,19 @@ class Server:
         await self.clients[client]["zip"].GetZip()
 
 
-a = Server()
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser(
+        description="Run a server that receives from clients zips, compiles their content, and send the binaries back, or executables"
+    )
+    parser.add_argument(
+        "-port", "--port", metavar="port",
+        required=False, help="If you want you can give a desired port for the server, default is 8008"
+    )
+    args = parser.parse_args()
+    if args.port is not None:
+        server=Server(args.port)
+    else:
+        server=Server()
+    # print(args.port)
+    # print(f"Server is on: ({server.server_host}, {server.server_port})")
