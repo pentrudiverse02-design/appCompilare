@@ -7,8 +7,8 @@ from pathlib import Path
 from comune.Package import *
 from comune.PackageType import *
 
-from comune.compilType import CompilationType
-from comune.sysArhitecture import SystemArchitecture
+from comune.compilType import CompilationType, CompilationTypeConvStr
+from comune.sysArhitecture import SystemArchitecture, SystemArchitectureConvStr
 from comune.zips import ZipClass
 
 
@@ -146,31 +146,26 @@ if __name__ == "__main__":
                     "and receive the binaries, executables, or just the output"
     )
     parse.add_argument(
-        "-comp", "-compile", metavar="compileType",
-        required=True, choices=["RELEASE", "DEBUG", "LIBRARY"],
+        "-comp", "--compileFor", metavar="compileType", type=CompilationTypeConvStr,
+        required=True, choices=[CompilationType.RELEASE,CompilationType.DEBUG,CompilationType.LIBRARY],
         help="this passes the compilation type for the files. DO NOT PASS A main() function FOR LIBRARY"
     )
     parse.add_argument(
-        "-arhi", "-arhitecture", metavar="systemArhitecture",
-        required=True, choices=["x86_64", "arm64", "aarch_64"],
+        "-arhi", "--arhitecture", metavar="systemArhitecture", type=SystemArchitectureConvStr,
+        required=True, choices=[SystemArchitecture.x86_64,SystemArchitecture.arm64,SystemArchitecture.aarch_64],
         help="this passes the target's computer arhitecture, Default is x86_64"
     )
     parse.add_argument(
-        "-stay", "-stay", metavar="stay in server",
-        required=True, choices=[False, True],
+        "-s", "--stay", metavar="stay in server",
+        required=True, choices=[False, True], type=bool,
         help="this parameter tells the server if you wish the compiled files to stay in server or not"
     )
     parse.add_argument(
-        "-folder", "-folder", metavar="folder", required=True,
+        "-f", "--folder", metavar="folder", required=True,
         help="how do you wish to clients folder to be named"
     )
     args = parse.parse_args()
-    client = Client(
-        CompilationType(args.compile),
-        SystemArchitecture(args.arhitecture),
-        args.stay,
-        args.folder
-    )
+    client = Client(args.compileFor, args.arhitecture, args.stay, args.folder)
     asyncio.run(client.ConnectToServer())
     asyncio.run(client.SendZips())
     asyncio.run(client.Disconect())
