@@ -1,6 +1,7 @@
 import asyncio
 import struct
-from PackageType import PackageType as PackageType
+
+from comune.PackageType import PackageType
 HEADER_FORMAT = "!BI"  # ! = little endian , B = Byte ,  I = Integer
 HEADER_SIZE = struct.calcsize(HEADER_FORMAT)
 PAYLOAD_SIZE = 1024

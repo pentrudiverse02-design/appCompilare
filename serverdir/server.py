@@ -1,11 +1,9 @@
-import asyncio
 import json
 import os.path
-import struct
 
-from Package import *
-from PackageType import *
-from zips import ZipClass
+from comune.Package import *
+from comune.PackageType import *
+from comune.zips import ZipClass
 
 
 class Server:

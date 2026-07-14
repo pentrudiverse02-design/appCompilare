@@ -1,17 +1,12 @@
 import json
 import os.path
-import asyncio
-import struct
-from asyncio import all_tasks
-from concurrent.futures import ThreadPoolExecutor
-from wsgiref.types import InputStream
 
-from Package import *
-from PackageType import *
+from comune.Package import *
+from comune.PackageType import *
 
-from compilType import CompilationType
-from sysArhitecture import SystemArchitecture
-from zips import ZipClass
+from comune.compilType import CompilationType
+from comune.sysArhitecture import SystemArchitecture
+from comune.zips import ZipClass
 
 
 class Client:
@@ -120,22 +115,22 @@ class Client:
                     print("\n\na fost introdus ceva ce nu ne asteaptam in InputStreamHandle\n")
 
 
-async def main():
-    a = Client(CompilationType.DEBUG,
-               SystemArchitecture.x86_64,
-               False,
-               'client_1_Folder',
-               ["p1C.zip"]
-               )
-
-    async with asyncio.TaskGroup() as tg:
-        await a.InputStreamHandle(tg)
-    # await a.ConnectToServer()
-    # await a.SendZips()
-
-
-if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        print("\nClient closed.")
+# async def main():
+#     a = Client(CompilationType.DEBUG,
+#                SystemArchitecture.x86_64,
+#                False,
+#                'client_1_Folder',
+#                ["p1C.zip"]
+#                )
+#
+#     async with asyncio.TaskGroup() as tg:
+#         await a.InputStreamHandle(tg)
+#     # await a.ConnectToServer()
+#     # await a.SendZips()
+#
+#
+# if __name__ == "__main__":
+#     try:
+#         asyncio.run(main())
+#     except KeyboardInterrupt:
+#         print("\nClient closed.")

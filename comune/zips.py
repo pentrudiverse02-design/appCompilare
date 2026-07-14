@@ -1,6 +1,6 @@
 import json
 from asyncio import *
-from Package import *
+from comune.Package import *
 
 
 class ZipClass:
@@ -8,7 +8,7 @@ class ZipClass:
                  w: StreamWriter,
                  r: StreamReader,
                  recv: str
-                    #o sa trebuiasca sa facem o contrusctie de adrese
+                    # o sa trebuiasca sa facem o contrusctie de adrese
                     # o sa trebuiasca sa trimit adresa curata catre client
                     # si noi o sa trebuiasca sa citim complet fisierele
                  ):
@@ -19,7 +19,6 @@ class ZipClass:
         self.writer = w
         self.ReceiverFolder = recv
 
-        # self.SendFolder = sen
 
     async def SendZip(self):
         if self.zipsToReadAndSend is None or self.zipsToSend is None:
@@ -36,11 +35,6 @@ class ZipClass:
                     break
                 await WritePackage(self.writer, PackageType.ZIP, payload)
 
-                # header = struct.pack(HEADER_FORMAT, int(PackageType.UPLOAD_ZIP), len(payload))
-                # self.writer.write(header + payload)
-                # await self.writer.drain()
-                print("am trimis zip ul")
-        # self.zipsToSend = None
 
     async def GetZip(self):
         if self.zipsToReceive is None:
@@ -64,12 +58,6 @@ class ZipClass:
             self.zipsToReadAndSend[self.ReceiverFolder + '/'+ i] = self.zipsToSend[i]
 
 
-
     def ZipsToReceive(self, zips):
         # zips = {"zip1.zip" : int(dim1), etc} and self.zipsToSend=zips.copy
-        # a=json.loads(zips).decode('utf-8')
-
-        # self.zipsToReceive = zips.copy()
-        # print(f"am primit zipsToReceive {self.zipsToReceive}")
-
         self.zipsToReceive = json.loads(zips)
