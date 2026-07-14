@@ -61,7 +61,6 @@ class Client:
         print(f'Send: ')
         await WritePackage(self.writer, PackageType.LOGIN_CREDENTIALS, self.GetClientData())
         self.ZIP = ZipClass(self.writer, self.reader, "clientsFolder")
-        # selectedZips trebuie sa fie construit
         self.ZIP.ZipsToSend(self.zipsDict)
 
     async def ReceiveStreamHandle(self):
@@ -89,23 +88,24 @@ class Client:
         await self.ZIP.SendZip()
 
     def ConstructZipList(self):
-        sources=Path(self.folderLocation)
+        sources = Path(self.folderLocation)
         files = sources.iterdir()
         for i in files:
-            self.zipsList=i.name
-            self.zipsDict[i]=os.path.getsize(i)
+            self.zipsList = i.name
+            self.zipsDict[i] = os.path.getsize(i)
+
     # def ConstructZipDict(self):
     #     for i in self.zipsList:
     #         sizee = os.path.getsize('clientsFolder/' + i)
     #         self.zipsDict[str(i)] = sizee
 
     async def Disconect(self):
-        await WritePackage(self.writer,PackageType.DISCONNECT,None)
-        if self.writer.
-        self.writer.close()
-        await self.writer.wait_closed()
-        self.writer=None
-        self.reader=None
+        if not self.writer.is_closing():
+            await WritePackage(self.writer, PackageType.DISCONNECT, None)
+            self.writer.close()
+            await self.writer.wait_closed()
+        self.writer = None
+        self.reader = None
 
     async def InputStreamHandle(self, tg):
         while True:
@@ -136,8 +136,6 @@ class Client:
                     break
                 case _:
                     print("\n\na fost introdus ceva ce nu ne asteaptam in InputStreamHandle\n")
-
-
 
 
 if __name__ == "__main__":

@@ -2,8 +2,7 @@ import asyncio
 import json
 import os
 
-from comune import PackageType
-from comune.Package import ReadPackage, WritePackage, ReadPackagetTypeAndLength, GetPackageContent
+from comune.Package import *
 from comune.zips import ZipClass
 
 
@@ -15,7 +14,7 @@ class Server:
     maxConnections = 0
     SERVER = None
 
-    def __init__(self, port = 8008):
+    def __init__(self, port=8008):
         self.server_port = port
         asyncio.run(self.CreateServer())
 
@@ -58,11 +57,13 @@ class Server:
                            "ok".encode('utf-8'))
         print(f"am primit de la tine {addr} datele {self.clients[addr]}")
 
+
+    # probabil o sa trebuiasca sa implementez la fiecare metoda din clasa de mesagerie un
+    # return True False
+    # in caz de succes sau nu.
+    # in caz de esec sa se apeleze Disconnect(client)
     async def ReceiveStreamHandle(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
         while True:
-            # if reader.at_eof():
-            #     print("sunt la client, conectiune inchisa")
-            #     exit()
             client = writer.get_extra_info('peername')
             if not client in self.clients.keys():
                 await self.ClientConnect(writer.get_extra_info('peername'), reader, writer)
@@ -80,14 +81,22 @@ class Server:
                     self.clients[client]["zip"].ZipsToReceive(payload)
                     # ZipToReceive(json.loads(payload.decode('utf-8')))
                 case PackageType.DISCONNECT:
-                    pass
+                    self.DisconnectClient(client)
+
 
     async def ReceiveZip(self, client):
         await self.clients[client]["zip"].GetZip()
 
 
+    def DisconnectClient(self,client):
+        #verificam daca putem sa stergem clientul
+        if self.clients.keys().__contains__(client):
+            if self.clients[client]["stay"] is False:
+                os.removedirs(self.clients[client]["folder"])
+            self.clients.pop(client)
 if __name__ == '__main__':
     import argparse
+
     parser = argparse.ArgumentParser(
         description="Run a server that receives from clients zips, compiles their content, and send the binaries back, or executables"
     )
@@ -97,7 +106,7 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
     if args.port is not None:
-        server=Server(args.port)
+        server = Server(args.port)
     else:
-        server=Server()
+        server = Server()
     # print(args.port)on: ({server.server_host}, {server.server_port})")
