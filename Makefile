@@ -1,4 +1,4 @@
-.PHONY: server comunee
+.PHONY: server client run-clients run-server clean 
 SHELL := bash
 
 server: comunee
