@@ -169,23 +169,3 @@ if __name__ == "__main__":
     asyncio.run(client.ConnectToServer())
     asyncio.run(client.SendZips())
     asyncio.run(client.Disconect())
-
-# async def main():
-#     a = Client(CompilationType.DEBUG,
-#                SystemArchitecture.x86_64,
-#                False,
-#                'client_1_Folder',
-#                ["p1C.zip"]
-#                )
-#
-#     async with asyncio.TaskGroup() as tg:
-#         await a.InputStreamHandle(tg)
-#     # await a.ConnectToServer()
-#     # await a.SendZips()
-#
-#
-# if __name__ == "__main__":
-#     try:
-#         asyncio.run(main())
-#     except KeyboardInterrupt:
-#         print("\nClient closed.")
