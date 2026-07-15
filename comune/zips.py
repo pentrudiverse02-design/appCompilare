@@ -24,7 +24,7 @@ class ZipClass:
         if self.zipsToReadAndSend is None or self.zipsToSend is None:
             print("trebuie sa fie selectate niste .zip, err din zips.py")
             exit("zips_ERR")
-
+    #aici am comentat si am facut zips_safe la etapa de bash uri,
         zips_safe = {str(key): value for key, value in self.zipsToSend.items()}
         #z = json.dumps(self.zipsToSend).encode('utf-8')
         z = json.dumps(zips_safe).encode('utf-8')

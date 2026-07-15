@@ -101,13 +101,13 @@ class Client:
     #         self.zipsDict[str(i)] = sizee
 
     async def Disconect(self):
-        if not self.writer.is_closing():
+        if self.writer.is_closing():
             await WritePackage(self.writer, PackageType.DISCONNECT, None)
             self.writer.close()
             await self.writer.wait_closed()
         self.writer = None
         self.reader = None
-
+        print("clientul s a deconectat")
     async def InputStreamHandle(self, tg):
         while True:
             # 1. SCHIMBARE CRITICĂ: to_thread lasă bucla asincronă să ruleze în fundal

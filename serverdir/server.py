@@ -73,7 +73,7 @@ class Server:
                 case PackageType.ZIP:
                     await self.ReceiveZip(client)
                 case PackageType.ERROR:
-                    pass
+                    print("a fost detectata o eroare de tipul")
                 case PackageType.SELECTED_ZIPS:
                     payload = await GetPackageContent(reader, lenght)
                     payload = payload.decode('utf-8')

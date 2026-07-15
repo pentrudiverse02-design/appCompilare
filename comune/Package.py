@@ -50,7 +50,8 @@ async def ReadPackagetTypeAndLength(reader: asyncio.StreamReader) :
     except (ConnectionError, ConnectionResetError, asyncio.IncompleteReadError) as e:
         print(f"probleme la {e}")
         print("trebuie deconectat")
-        exit()
+        return PackageType.DISCONNECT, 0
+
 
 
 async def WritePackage(writer: asyncio.StreamWriter,
