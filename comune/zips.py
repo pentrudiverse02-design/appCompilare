@@ -24,7 +24,11 @@ class ZipClass:
         if self.zipsToReadAndSend is None or self.zipsToSend is None:
             print("trebuie sa fie selectate niste .zip, err din zips.py")
             exit("zips_ERR")
-        z = json.dumps(self.zipsToSend).encode('utf-8')
+
+        zips_safe = {str(key): value for key, value in self.zipsToSend.items()}
+        #z = json.dumps(self.zipsToSend).encode('utf-8')
+        z = json.dumps(zips_safe).encode('utf-8')
+
         await WritePackage(self.writer, PackageType.SELECTED_ZIPS, z)
         for i in self.zipsToReadAndSend.keys():
             bufsize = self.zipsToReadAndSend[i]
@@ -51,11 +55,15 @@ class ZipClass:
 
     def ZipsToSend(self, zips: dict):
         # zips = {"zip1.zip" : int(dim1), etc} and self.zipsToReadAndSend=zips.copy
+        # aici e o metoda cred ca mi face de tipul POsixPath
+        # self.zipsToSend = zips.copy()
         self.zipsToSend = zips.copy()
         print(f"zips to send {self.zipsToSend}")
         print(f"zips to send {self.ReceiverFolder + '/'}")
         for i in self.zipsToSend.keys():
-            self.zipsToReadAndSend[self.ReceiverFolder + '/'+ i] = self.zipsToSend[i]
+            print(i)
+            # ceva=self.ReceiverFolder + '/'+ i
+            # self.zipsToReadAndSend[ceva] = self.zipsToSend[i]
 
 
     def ZipsToReceive(self, zips):

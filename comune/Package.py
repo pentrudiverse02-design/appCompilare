@@ -56,9 +56,10 @@ async def ReadPackagetTypeAndLength(reader: asyncio.StreamReader) :
 async def WritePackage(writer: asyncio.StreamWriter,
                        messageType: PackageType,
                        payload: bytes):
-    header = struct.pack(HEADER_FORMAT, int(messageType), len(payload))
     if payload is not None:
+        header = struct.pack(HEADER_FORMAT, int(messageType), len(payload))
         writer.write(header + payload)
     else:
+        header = struct.pack(HEADER_FORMAT, int(messageType), 0)
         writer.write(header)
     await writer.drain()

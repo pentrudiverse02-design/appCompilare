@@ -35,7 +35,7 @@ class Client:
                  # se citeasca automat .zip din folderul clientului.
                  #
                  # acest folder o sa se contruieasca din client-run.sh
-                 # in locatia clientdir/clientsFolder/NUME_FOLDER_GENERAT
+                 # in locatia clientdir/clients/NUME_FOLDER_GENERAT
                  # si o sa l populeze cu .zip din folderul ZipsToBorrow
                  # 
                  # zipsList  # aici trebuie sa fie de tip [string, string, etc]
@@ -60,7 +60,7 @@ class Client:
         self.reader, self.writer = await asyncio.open_connection("127.0.0.1", 8008)
         print(f'Send: ')
         await WritePackage(self.writer, PackageType.LOGIN_CREDENTIALS, self.GetClientData())
-        self.ZIP = ZipClass(self.writer, self.reader, "clientsFolder")
+        self.ZIP = ZipClass(self.writer, self.reader, "clients")
         self.ZIP.ZipsToSend(self.zipsDict)
 
     async def ReceiveStreamHandle(self):
