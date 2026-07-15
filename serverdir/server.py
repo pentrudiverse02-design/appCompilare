@@ -74,6 +74,8 @@ class Server:
                     await self.ReceiveZip(client)
                 case PackageType.ERROR:
                     print("a fost detectata o eroare de tipul")
+                    self.DisconnectClient(client)
+                    break
                 case PackageType.SELECTED_ZIPS:
                     payload = await GetPackageContent(reader, lenght)
                     payload = payload.decode('utf-8')
@@ -82,6 +84,7 @@ class Server:
                     # ZipToReceive(json.loads(payload.decode('utf-8')))
                 case PackageType.DISCONNECT:
                     self.DisconnectClient(client)
+                    break
 
 
     async def ReceiveZip(self, client):

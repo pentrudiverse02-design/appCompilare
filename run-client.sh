@@ -38,7 +38,7 @@ pwd
 ls
 
 cd clients
-echo ""
+echo "inainte de for clients"
 pwd
 ls
 
@@ -48,13 +48,21 @@ for ((i=0;i<nrClients;i++)); do
   echo ""
   echo ""
   echo ""
-
-  vc=${compileFor[randComp]}
+  variabilaRandCompile=$(($(random ${lenComp})-1))
+  variabilaRandArchitecture=$(($(random ${lenSys})-1))
+  vc=${compileFor[${variabilaRandCompile}]}
   echo "${vc}"
-  vs=${sysarhi[randSys]}
+  vs=${sysarhi[${variabilaRandArchitecture}]}
   echo "${vs}"
+  vstay=$(($(random 2)-1))
+  echo "${vstay}"
+  echo "${vstay}"
+  echo "${vstay}"
+  echo "${vstay}"
+
   nume=$(GenRandNameFolder)
   echo "${nume}"
+
   mkdir ${nume}
   echo "11"
   pwd
@@ -83,8 +91,8 @@ for ((i=0;i<nrClients;i++)); do
   pwd
   ls
 
-  python3 -m clientdir.client -comp ${vc} -archi ${vs} -s $((RANDOM % 2)) -f ${nume}
-  cd clients || exit 1
+  python3 -m clientdir.client -comp ${vc} -archi ${vs} -s ${vstay} -f ${nume}
+  cd clientdir/clients || exit 1
   echo "44"
   pwd
   ls

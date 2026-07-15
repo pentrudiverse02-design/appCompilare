@@ -138,7 +138,11 @@ class Client:
                 case _:
                     print("\n\na fost introdus ceva ce nu ne asteaptam in InputStreamHandle\n")
 
-
+def ConvertToBool( str ):
+    if str =="1":
+        return True
+    else:
+        return False
 if __name__ == "__main__":
     import argparse
 
@@ -159,7 +163,7 @@ if __name__ == "__main__":
     )
     parse.add_argument(
         "-s", "--stay", metavar="stay in server",
-        required=True, choices=[False, True], type=bool,
+        required=True, choices=[False, True], type=ConvertToBool,
         help="this parameter tells the server if you wish the compiled files to stay in server or not"
     )
     parse.add_argument(
@@ -167,6 +171,9 @@ if __name__ == "__main__":
         help="how do you wish to clients folder to be named"
     )
     args = parse.parse_args()
+    print()
+    print()
+    print(args.compileFor)
     client = Client(args.compileFor, args.architecture, args.stay, args.folder)
     asyncio.run(client.ConnectToServer())
     asyncio.run(client.SendZips())
