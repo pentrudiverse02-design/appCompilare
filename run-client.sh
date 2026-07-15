@@ -5,30 +5,87 @@ GenRandNameFolder()
   nrCharsForName=10
   tr -dc A-Za-z0-9 </dev/urandom | head -c ${nrCharsForName}
 }
+random()
+{
+  echo $(( (( RANDOM % $1 )) +1 ))
+}
+#set -x
 cd clientdir/ZipsToBorrow || exit 1
-zips=( *.zip )
-cd ..
+echo ""
+pwd
+ls
+zips=($(ls -x *.zip))
+echo "${zips[@]}"
+#(ls -x *.zip | while read FISIER; do zips+=( "${FISIER}" ); done)
+
+cd .. || exit 1
+echo ""
+pwd
+ls
 sysarhi=( x86_64 arm64 aarch_64 )
 compileFor=( RELEASE DEBUG LIBRARY )
 
-randZips=$(( $RANDOM % ${#zips[@]} ))
-#echo ${arr[$rand]}
-randSys=$[$RANDOM % ${#sysarhi[@]}]
-randComp=$[$RANDOM % ${#compileFor[@]}]
 
-#for zip in "${zips[@]}"; do
-#  echo "$zip"
-#done
+lenZips="${#zips[@]}"
+lenSys="${#sysarhi[@]}"
+lenComp="${#compileFor[@]}"
+
 nrClients=2
+
+mkdir clients
+echo ""
+pwd
 ls
+
+cd clients
+echo ""
+pwd
+ls
+
 for ((i=0;i<nrClients;i++)); do
+  echo ""
+  echo ""
+  echo ""
+  echo ""
+  echo ""
+
   vc=${compileFor[randComp]}
+  echo "${vc}"
   vs=${sysarhi[randSys]}
-  nume=${GenRandNameFolder}
+  echo "${vs}"
+  nume=$(GenRandNameFolder)
+  echo "${nume}"
   mkdir ${nume}
-  for ((j=0;j<${randZips};j++)); do
-      cp ZipsToBorrow/${zips[randZips]} ${nume}
-  done
+  echo "11"
+  pwd
+  ls
+
   cd ..
-  python3 -m clientdir.client ${vc} ${vs} ${RANDOM}%2 ${nume}
+  echo "INCEPEM COPIERE"
+  pwd
+  ls
+#
+  limita=$(random lenZips)
+#  limita=10
+  echo "  o sa copiem pentru ${limita} .zips"
+  for ((j=0;j<limita;j++)); do
+    index=$(($(random ${lenZips})-1))
+    zipul="ZipsToBorrow/${zips[${index}]}"
+    destinatia="clients/${nume}"
+#    echo "${zipul}"
+#    echo  "${destinatia}"
+    cp ${zipul} ${destinatia}
+#    echo ""
+  done
+
+  echo "TERMINAM COPIERE"
+  cd ..
+  pwd
+  ls
+
+  python3 -m clientdir.client -comp ${vc} -archi ${vs} -s $((RANDOM % 2)) -f ${nume}
+  cd clients || exit 1
+  echo "44"
+  pwd
+  ls
 done

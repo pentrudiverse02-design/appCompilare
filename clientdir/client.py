@@ -8,7 +8,7 @@ from comune.Package import *
 from comune.PackageType import *
 
 from comune.compilType import CompilationType, CompilationTypeConvStr
-from comune.sysArhitecture import SystemArchitecture, SystemArchitectureConvStr
+from comune.sysArchitecture import SystemArchitecture, SystemArchitectureConvStr
 from comune.zips import ZipClass
 
 
@@ -17,7 +17,7 @@ class Client:
     serverCon = "127.0.0.1", 8008
     writer, reader = asyncio.StreamWriter, asyncio.StreamReader
     compileFor = CompilationType.RELEASE
-    sysArhi = SystemArchitecture.x86_64
+    sysArchi = SystemArchitecture.x86_64
     stayInServer = False
     zipsList = []
     zipsDict = {}  # aici am facut din simplu vector in dictionar,
@@ -42,9 +42,9 @@ class Client:
                  # 
                  ):
         self.compileFor = compileType
-        self.sysArhi = systemArchi
+        self.sysArchi = systemArchi
         self.stayInServer = stay
-        self.folderLocation = "clientdir/clientsFolder/" + folder
+        self.folderLocation = "clientdir/clients/" + folder
         self.ConstructZipList()
         # self.zipsList
         # self.ConstructZipDict()
@@ -52,7 +52,7 @@ class Client:
 
     def GetClientData(self):
         dataJson = {"compileFor": int(self.compileFor),
-                    "sysArhi": int(self.sysArhi),
+                    "sysArchi": int(self.sysArchi),
                     "stay": self.stayInServer}
         return json.dumps(dataJson).encode('utf-8')
 
@@ -88,7 +88,8 @@ class Client:
         await self.ZIP.SendZip()
 
     def ConstructZipList(self):
-        sources = Path(self.folderLocation)
+        sources =  Path(self.folderLocation)
+        print(sources)
         files = sources.iterdir()
         for i in files:
             self.zipsList = i.name
@@ -150,10 +151,11 @@ if __name__ == "__main__":
         required=True, choices=[CompilationType.RELEASE,CompilationType.DEBUG,CompilationType.LIBRARY],
         help="this passes the compilation type for the files. DO NOT PASS A main() function FOR LIBRARY"
     )
+    # archi!!!
     parse.add_argument(
-        "-arhi", "--arhitecture", metavar="systemArhitecture", type=SystemArchitectureConvStr,
+        "-archi", "--architecture", metavar="systemArchitecture", type=SystemArchitectureConvStr,
         required=True, choices=[SystemArchitecture.x86_64,SystemArchitecture.arm64,SystemArchitecture.aarch_64],
-        help="this passes the target's computer arhitecture, Default is x86_64"
+        help="this passes the target's computer architecture, Default is x86_64"
     )
     parse.add_argument(
         "-s", "--stay", metavar="stay in server",
@@ -165,7 +167,7 @@ if __name__ == "__main__":
         help="how do you wish to clients folder to be named"
     )
     args = parse.parse_args()
-    client = Client(args.compileFor, args.arhitecture, args.stay, args.folder)
+    client = Client(args.compileFor, args.architecture, args.stay, args.folder)
     asyncio.run(client.ConnectToServer())
     asyncio.run(client.SendZips())
     asyncio.run(client.Disconect())
