@@ -96,7 +96,7 @@ class Server:
         #verificam daca putem sa stergem clientul
         if self.clients.keys().__contains__(client):
             if self.clients[client]["stay"] is False:
-                os.removedirs(self.clients[client]["folder"])
+                os.removedirs("AppCompilareServerDir/ascunse/"+str(self.clients[str(client)]))
             self.clients.pop(client)
 
 # s=Server()
