@@ -16,8 +16,6 @@ pwd
 ls
 zips=($(ls -x *.zip))
 echo "${zips[@]}"
-#(ls -x *.zip | while read FISIER; do zips+=( "${FISIER}" ); done)
-
 cd .. || exit 1
 echo ""
 pwd
@@ -25,12 +23,11 @@ ls
 sysarhi=( x86_64 arm64 aarch_64 )
 compileFor=( RELEASE DEBUG LIBRARY )
 
-
 lenZips="${#zips[@]}"
 lenSys="${#sysarhi[@]}"
 lenComp="${#compileFor[@]}"
 
-nrClients=2
+nrClients=9
 
 mkdir clients
 echo ""

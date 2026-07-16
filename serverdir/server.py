@@ -71,6 +71,7 @@ class Server:
             header, lenght = await ReadPackagetTypeAndLength(reader)
             match header:
                 case PackageType.ZIP:
+                    print(f"apelez metoda de receptie zips de la {client}")
                     await self.ReceiveZip(client)
                 case PackageType.ERROR:
                     print("a fost detectata o eroare de tipul")
@@ -79,7 +80,7 @@ class Server:
                 case PackageType.SELECTED_ZIPS:
                     payload = await GetPackageContent(reader, lenght)
                     payload = payload.decode('utf-8')
-                    print(payload)
+                    print(f"o sa primesc: {payload}")
                     self.clients[client]["zip"].ZipsToReceive(payload)
                     # ZipToReceive(json.loads(payload.decode('utf-8')))
                 case PackageType.DISCONNECT:
@@ -97,6 +98,9 @@ class Server:
             if self.clients[client]["stay"] is False:
                 os.removedirs(self.clients[client]["folder"])
             self.clients.pop(client)
+
+# s=Server()
+
 if __name__ == '__main__':
     import argparse
 

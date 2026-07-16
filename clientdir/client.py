@@ -1,12 +1,9 @@
 import asyncio
 import json
 import os.path
-from importlib.metadata import requires
 from pathlib import Path
-
 from comune.Package import *
 from comune.PackageType import *
-
 from comune.compilType import CompilationType, CompilationTypeConvStr
 from comune.sysArchitecture import SystemArchitecture, SystemArchitectureConvStr
 from comune.zips import ZipClass
@@ -101,6 +98,7 @@ class Client:
     #         self.zipsDict[str(i)] = sizee
 
     async def Disconect(self):
+        print("clientul incepe deconectarea")
         if self.writer.is_closing():
             await WritePackage(self.writer, PackageType.DISCONNECT, None)
             self.writer.close()
@@ -137,12 +135,27 @@ class Client:
                     break
                 case _:
                     print("\n\na fost introdus ceva ce nu ne asteaptam in InputStreamHandle\n")
+    async def Ruleaza(self):
+        print("conectare la server")
+        await self.ConnectToServer()
+        print("trimitere zips")
+        await self.SendZips()
+        print("deconectare")
+        await self.Disconect()
+
+
 
 def ConvertToBool( str ):
     if str =="1":
         return True
     else:
         return False
+#
+# a=Client(CompilationType.RELEASE,SystemArchitecture.x86_64,False,"2kFLWB7LKp")
+# a.ConnectToServer()
+# a.SendZips()
+
+
 if __name__ == "__main__":
     import argparse
 
@@ -175,6 +188,10 @@ if __name__ == "__main__":
     print()
     print(args.compileFor)
     client = Client(args.compileFor, args.architecture, args.stay, args.folder)
-    asyncio.run(client.ConnectToServer())
-    asyncio.run(client.SendZips())
-    asyncio.run(client.Disconect())
+    asyncio.run(client.Ruleaza())
+    # print("ma conectez la server")
+    # asyncio.run(client.ConnectToServer())
+    # print("trimit un zip")
+    # asyncio.run(client.SendZips())
+    # print("solicit sa deconectez de la server")
+    # asyncio.run(client.Disconect())
