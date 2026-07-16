@@ -2,8 +2,8 @@ import asyncio
 import json
 import os.path
 from pathlib import Path
-from comune.Package import *
-from comune.PackageType import *
+from comune.TransportSerializer import *
+from comune.PacketType import *
 from comune.compilType import CompilationType, CompilationTypeConvStr
 from comune.sysArchitecture import SystemArchitecture, SystemArchitectureConvStr
 from comune.zips import ZipClass
@@ -22,6 +22,7 @@ class Client:
     # sa stiu exact cat trebuie sa primesc de la fiecare .zip in parte
     # in interiorul clientului o sa folosesc locatia completa pentru .zips
     #   acest lucru se va face construind complet in momentul respectiv cu self.folderLocation
+
 
     def __init__(self,
                  compileType: CompilationType,
@@ -47,60 +48,65 @@ class Client:
         # self.ConstructZipDict()
         self.ZIP = None
 
+
     def GetClientData(self):
         dataJson = {"compileFor": int(self.compileFor),
                     "sysArchi": int(self.sysArchi),
                     "stay": self.stayInServer}
         return json.dumps(dataJson).encode('utf-8')
 
+
     async def ConnectToServer(self):
         self.reader, self.writer = await asyncio.open_connection("127.0.0.1", 8008)
         print(f'Send: ')
-        await WritePackage(self.writer, PackageType.LOGIN_CREDENTIALS, self.GetClientData())
+        await WritePacket(self.writer, PacketType.LOGIN_CREDENTIALS, self.GetClientData())
         self.ZIP = ZipClass(self.writer, self.reader, "clients")
+        print(f"zips")
         self.ZIP.ZipsToSend(self.zipsDict)
+
 
     async def ReceiveStreamHandle(self):
         while True:
             if self.reader.at_eof():
                 print("sunt la client, conectiune inchisa")
                 exit()
-            header, lenght = await ReadPackagetTypeAndLength(self.reader)
+            header, lenght = await ReadPacketTypeAndLength(self.reader)
             match header:
-                case PackageType.STATUS:
-                    payload = await GetPackageContent(self.reader, lenght)
+                case PacketType.STATUS:
+                    payload = await GetPacketContent(self.reader, lenght)
                     print(f"{payload.decode('utf-8')}")
 
-                case PackageType.SELECTED_ZIPS:
-                    payload = await GetPackageContent(self.reader, lenght)
+                case PacketType.SELECTED_ZIPS:
+                    payload = await GetPacketContent(self.reader, lenght)
                     self.ZIP.ZipToReceive(json.loads(payload.decode('utf-8')))
 
-                case PackageType.ZIP:
+                case PacketType.ZIP:
                     self.ZIP.GetZip()
 
-                case PackageType.DISCONNECT:
+                case PacketType.DISCONNECT:
                     pass
+
 
     async def SendZips(self):
         await self.ZIP.SendZip()
 
+
     def ConstructZipList(self):
+        print()
+        print("construieste zipdict din client")
         sources =  Path(self.folderLocation)
         print(sources)
         files = sources.iterdir()
         for i in files:
-            self.zipsList = i.name
-            self.zipsDict[i] = os.path.getsize(i)
+            self.zipsList = str(i.name)
+            self.zipsDict[str(i)] = os.path.getsize(i)
+        print()
 
-    # def ConstructZipDict(self):
-    #     for i in self.zipsList:
-    #         sizee = os.path.getsize('clientsFolder/' + i)
-    #         self.zipsDict[str(i)] = sizee
 
     async def Disconect(self):
         print("clientul incepe deconectarea")
         if self.writer.is_closing():
-            await WritePackage(self.writer, PackageType.DISCONNECT, None)
+            await WritePacket(self.writer, PacketType.DISCONNECT, None)
             self.writer.close()
             await self.writer.wait_closed()
         self.writer = None
@@ -135,6 +141,8 @@ class Client:
                     break
                 case _:
                     print("\n\na fost introdus ceva ce nu ne asteaptam in InputStreamHandle\n")
+
+
     async def Ruleaza(self):
         print("conectare la server")
         await self.ConnectToServer()
@@ -144,17 +152,11 @@ class Client:
         await self.Disconect()
 
 
-
 def ConvertToBool( str ):
     if str =="1":
         return True
     else:
         return False
-#
-# a=Client(CompilationType.RELEASE,SystemArchitecture.x86_64,False,"2kFLWB7LKp")
-# a.ConnectToServer()
-# a.SendZips()
-
 
 if __name__ == "__main__":
     import argparse
@@ -189,9 +191,4 @@ if __name__ == "__main__":
     print(args.compileFor)
     client = Client(args.compileFor, args.architecture, args.stay, args.folder)
     asyncio.run(client.Ruleaza())
-    # print("ma conectez la server")
-    # asyncio.run(client.ConnectToServer())
-    # print("trimit un zip")
-    # asyncio.run(client.SendZips())
-    # print("solicit sa deconectez de la server")
-    # asyncio.run(client.Disconect())
+

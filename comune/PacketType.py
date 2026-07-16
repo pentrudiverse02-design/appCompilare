@@ -1,7 +1,7 @@
 from enum import IntEnum
 
 
-class PackageType(IntEnum):
+class PacketType(IntEnum):
     LOGIN_CREDENTIALS = 0
     ZIP = 1
     GET_LOGS = 2

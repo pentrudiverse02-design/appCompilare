@@ -1,6 +1,6 @@
 import json
 from asyncio import *
-from comune.Package import *
+from comune.TransportSerializer import *
 
 
 class ZipClass:
@@ -8,7 +8,7 @@ class ZipClass:
                  w: StreamWriter,
                  r: StreamReader,
                  recv: str
-                    # o sa trebuiasca sa facem o contrusctie de adrese
+                    #o sa trebuiasca sa facem o contrusctie de adrese
                     # o sa trebuiasca sa trimit adresa curata catre client
                     # si noi o sa trebuiasca sa citim complet fisierele
                  ):
@@ -18,21 +18,13 @@ class ZipClass:
         self.reader = r
         self.writer = w
         self.ReceiverFolder = recv
-        print("constructie de clasa ZIP")
-
 
     async def SendZip(self):
-        print("trimit un zip")
-        # print(f"informatii despre writer: {self.writer.get_extra_info()} , {self.writer.is_closing()}")
         if self.zipsToReadAndSend is None or self.zipsToSend is None:
             print("trebuie sa fie selectate niste .zip, err din zips.py")
             exit("zips_ERR")
-    #aici am comentat si am facut zips_safe la etapa de bash uri,
-        zips_safe = {str(key): value for key, value in self.zipsToSend.items()}
-        # z = json.dumps(self.zipsToSend).encode('utf-8')
-        z = json.dumps(zips_safe).encode('utf-8')
-
-        await WritePackage(self.writer, PackageType.SELECTED_ZIPS, z)
+        z = json.dumps(self.zipsToSend).encode('utf-8')
+        await WritePacket(self.writer, PacketType.SELECTED_ZIPS, z)
         for i in self.zipsToReadAndSend.keys():
             bufsize = self.zipsToReadAndSend[i]
             with open(i, 'rb') as f:
@@ -40,11 +32,15 @@ class ZipClass:
                 if payload is None:
                     print("payload none")
                     break
-                await WritePackage(self.writer, PackageType.ZIP, payload)
+                await WritePacket(self.writer, PacketType.ZIP, payload)
 
+                # header = struct.pack(HEADER_FORMAT, int(PacketType.UPLOAD_ZIP), len(payload))
+                # self.writer.write(header + payload)
+                # await self.writer.drain()
+                print("am trimis zip ul")
+        # self.zipsToSend = None
 
     async def GetZip(self):
-        print("primesc un zip")
         if self.zipsToReceive is None:
             print("nu stim ce .zip uri sa citim, din zips.py a pocnit")
             exit('zipsErr')
@@ -59,19 +55,18 @@ class ZipClass:
 
     def ZipsToSend(self, zips: dict):
         # zips = {"zip1.zip" : int(dim1), etc} and self.zipsToReadAndSend=zips.copy
-        # aici e o metoda cred ca mi face de tipul POsixPath
-        # self.zipsToSend = zips.copy()
-        self.zipsToSend = zips.copy()
-        print(f"zips to send {self.zipsToSend}")
-        print(f"zips to send {self.ReceiverFolder + '/'}")
-        for i in self.zipsToSend.keys():
-            print(i)
-            # ceva=self.ReceiverFolder + '/'+ i
-            # self.zipsToReadAndSend[ceva] = self.zipsToSend[i]
+        self.zipsToSend = {z.split('/')[-1]: b for z, b in zips.items()}
 
+        for i in zips.keys():
+            # self.zipsToReadAndSend[str(self.ReceiverFolder) + '/'+ str(i)] = self.zipsToSend[i]
+            self.zipsToReadAndSend[str(i)] = zips[i]
 
-    def ZipsToReceive(self, zips):
+    def ZipsToReceive(self, zips:dict):
         # zips = {"zip1.zip" : int(dim1), etc} and self.zipsToSend=zips.copy
-        print(f"metoda apelata din clasa zips: ZipsToReceive ")
-        self.zipsToReceive = json.loads(zips)
-        print(self.zipsToReceive)
+        # a=json.loads(zips).decode('utf-8')
+
+        # self.zipsToReceive = zips.copy()
+        # print(f"am primit zipsToReceive {self.zipsToReceive}")
+
+        self.zipsToReceive = zips
+        print(f"ce anume o sa trbeuiasca sa primesc: {type(self.zipsToReceive)} si {self.zipsToReceive}")

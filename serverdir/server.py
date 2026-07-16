@@ -2,7 +2,7 @@ import asyncio
 import json
 import os
 
-from comune.Package import *
+from comune.TransportSerializer import *
 from comune.zips import ZipClass
 
 
@@ -29,10 +29,10 @@ class Server:
             await self.SERVER.serve_forever()
 
     async def ClientConnect(self, addr, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
-        packtype, payload = await ReadPackage(reader)
-        if packtype != PackageType.LOGIN_CREDENTIALS:
+        packtype, payload = await ReadPacket(reader)
+        if packtype != PacketType.LOGIN_CREDENTIALS:
             s = f"draga {addr}, trimite mi creditentialele tale".encode('utf-8')
-            await WritePackage(writer, PackageType.ERROR, s)
+            await WritePacket(writer, PacketType.ERROR, s)
             return
         client = json.loads(payload.decode('utf-8'))
         client["reader"] = reader
@@ -52,8 +52,8 @@ class Server:
         if not os.path.exists(self.clients[addr]["folder"]):
             os.makedirs(self.clients[addr]["folder"])
         self.clients[addr]["zip"] = ZipClass(writer, reader, self.clients[addr]["folder"])
-        await WritePackage(self.clients[addr]["writer"],
-                           PackageType.STATUS,
+        await WritePacket(self.clients[addr]["writer"],
+                           PacketType.STATUS,
                            "ok".encode('utf-8'))
         print(f"am primit de la tine {addr} datele {self.clients[addr]}")
 
@@ -68,22 +68,22 @@ class Server:
             if not client in self.clients.keys():
                 await self.ClientConnect(writer.get_extra_info('peername'), reader, writer)
                 continue
-            header, lenght = await ReadPackagetTypeAndLength(reader)
+            header, lenght = await ReadPacketTypeAndLength(reader)
             match header:
-                case PackageType.ZIP:
+                case PacketType.ZIP:
                     print(f"apelez metoda de receptie zips de la {client}")
                     await self.ReceiveZip(client)
-                case PackageType.ERROR:
+                case PacketType.ERROR:
                     print("a fost detectata o eroare de tipul")
                     self.DisconnectClient(client)
                     break
-                case PackageType.SELECTED_ZIPS:
-                    payload = await GetPackageContent(reader, lenght)
-                    payload = payload.decode('utf-8')
-                    print(f"o sa primesc: {payload}")
+                case PacketType.SELECTED_ZIPS:
+                    payload = await GetPacketContent(reader, lenght)
+                    payload = json.loads(payload.decode('utf-8'))
+                    print(f"o sa primesc: {type(payload)} si {payload}")
                     self.clients[client]["zip"].ZipsToReceive(payload)
                     # ZipToReceive(json.loads(payload.decode('utf-8')))
-                case PackageType.DISCONNECT:
+                case PacketType.DISCONNECT:
                     self.DisconnectClient(client)
                     break
 
