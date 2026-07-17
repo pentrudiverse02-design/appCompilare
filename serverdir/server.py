@@ -1,6 +1,8 @@
 import asyncio
 import json
 import os
+from pathlib import Path
+from zipfile import ZipFile
 
 from comune.TransportSerializer import *
 from comune.zips import ZipClass
@@ -53,10 +55,9 @@ class Server:
             os.makedirs(self.clients[addr]["folder"])
         self.clients[addr]["zip"] = ZipClass(writer, reader, self.clients[addr]["folder"])
         await WritePacket(self.clients[addr]["writer"],
-                           PacketType.STATUS,
-                           "ok".encode('utf-8'))
+                          PacketType.STATUS,
+                          "ok".encode('utf-8'))
         print(f"am primit de la tine {addr} datele {self.clients[addr]}")
-
 
     # probabil o sa trebuiasca sa implementez la fiecare metoda din clasa de mesagerie un
     # return True False
@@ -73,6 +74,7 @@ class Server:
                 case PacketType.ZIP:
                     print(f"apelez metoda de receptie zips de la {client}")
                     await self.ReceiveZip(client)
+                    await self.UnpackAndCompile(client)
                 case PacketType.ERROR:
                     print("a fost detectata o eroare de tipul")
                     self.DisconnectClient(client)
@@ -87,17 +89,39 @@ class Server:
                     self.DisconnectClient(client)
                     break
 
-
     async def ReceiveZip(self, client):
         await self.clients[client]["zip"].GetZip()
 
-
-    def DisconnectClient(self,client):
-        #verificam daca putem sa stergem clientul
+    def DisconnectClient(self, client):
+        # verificam daca putem sa stergem clientul
         if self.clients.keys().__contains__(client):
             if self.clients[client]["stay"] is False:
-                os.removedirs("AppCompilareServerDir/ascunse/"+str(self.clients[str(client)]))
+                os.removedirs("AppCompilareServerDir/ascunse/" + str(self.clients[str(client)]))
             self.clients.pop(client)
+
+    # aici o sa trebuiasca sa iteram lista de fisiere .zip ale clientului
+    # odata ce dezarhivam un folder, intram in el, vedem ce comtine, si apelam direct Makefile ul
+    async def UnpackAndCompile(self, client):
+        p = Path(f"{self.clients[client]["folder"]}")
+        for child in p.iterdir():
+            print(child)
+            noulFolder = p / child.name.split(".")[0]
+            os.mkdir(noulFolder)
+            ZipFile.extractall(path=noulFolder)
+            if sorted(Path('.').glob('*.c')) is not None:
+                # Source - https://stackoverflow.com/q/20114390
+                # Posted by liuzw, modified by community. See post 'Timeline' for change history
+                # Retrieved 2026-07-17, License - CC BY-SA 3.0
+
+                make_process = subprocess.Popen("make clean all;", shell=True, stdout=subprocess.PIPE,
+                                                stderr=sys.stdout.fileno())
+                while True:
+                    line = make_process.stdout.readline()
+                    if not line: break
+                    print
+                    line,  # output to console in time
+                    sys.stdout.flush()
+
 
 # s=Server()
 
