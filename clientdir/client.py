@@ -52,7 +52,8 @@ class Client:
     def GetClientData(self):
         dataJson = {"compileFor": int(self.compileFor),
                     "sysArchi": int(self.sysArchi),
-                    "stay": self.stayInServer}
+                    "stay": self.stayInServer,
+                    "folder": self.folderLocation.split('/')[-1]}
         return json.dumps(dataJson).encode('utf-8')
 
 

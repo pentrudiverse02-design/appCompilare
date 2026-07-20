@@ -1,8 +1,10 @@
 import asyncio
 import json
 import os
+import subprocess
+import sys
 from pathlib import Path
-from zipfile import ZipFile
+from zipfile import ZipFile, BadZipFile
 
 from comune.TransportSerializer import *
 from comune.zips import ZipClass
@@ -50,7 +52,7 @@ class Server:
             locationComplition = "AppCompilareServerDir/"
         self.clients[addr]["folder"] = (self.folderServer +
                                         locationComplition +
-                                        str(addr))
+                                        self.clients[addr]["folder"])
         if not os.path.exists(self.clients[addr]["folder"]):
             os.makedirs(self.clients[addr]["folder"])
         self.clients[addr]["zip"] = ZipClass(writer, reader, self.clients[addr]["folder"])
@@ -104,23 +106,14 @@ class Server:
     async def UnpackAndCompile(self, client):
         p = Path(f"{self.clients[client]["folder"]}")
         for child in p.iterdir():
-            print(child)
-            noulFolder = p / child.name.split(".")[0]
-            os.mkdir(noulFolder)
-            ZipFile.extractall(path=noulFolder)
+            try:
+                zips=ZipFile(child)
+            except BadZipFile:
+                continue
+            zips.extractall(p)
             if sorted(Path('.').glob('*.c')) is not None:
-                # Source - https://stackoverflow.com/q/20114390
-                # Posted by liuzw, modified by community. See post 'Timeline' for change history
-                # Retrieved 2026-07-17, License - CC BY-SA 3.0
-
-                make_process = subprocess.Popen("make clean all;", shell=True, stdout=subprocess.PIPE,
-                                                stderr=sys.stdout.fileno())
-                while True:
-                    line = make_process.stdout.readline()
-                    if not line: break
-                    print
-                    line,  # output to console in time
-                    sys.stdout.flush()
+                make_process = subprocess.Popen(f"make cBin",shell=True, stdout=subprocess.PIPE,stderr=sys.stdout.fileno())
+                print(make_process.stdout.readline())
 
 
 # s=Server()

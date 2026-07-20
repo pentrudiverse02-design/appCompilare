@@ -51,6 +51,8 @@ class ZipClass:
             # await payload.drain()
             file.write(payload)
             print("am primit un zip")
+            print()
+            print()
 
 
     def ZipsToSend(self, zips: dict):
