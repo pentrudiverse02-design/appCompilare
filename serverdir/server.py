@@ -114,14 +114,14 @@ class Server:
                         zips.extractall(p)
                         patttt=str(child.absolute())
                         patttt=Path(patttt[:len(patttt)-4])
-
-                        c = list(patttt.glob("*.c"))  # sau p.rglob("*.c") dacă fișierele sunt în subfoldere
-                        # c = list(p.glob(f"{zips.filename.split('.')[1]}/*.c"))
+                        c = list(patttt.glob("*.c"))
                         if c:
-                            # Prințezi tu mai întâi comanda pe care o lansezi (opțional, dar util)
-                            print("$ make cBin")
 
-                            C = subprocess.Popen(" cd serverdir ; pwd ; ls ; make cBin",
+
+                            C = subprocess.Popen(f" cd serverdir ; pwd ; ls "
+                                                 f" ARCHITECTURE={self.clients[client]["sysArchi"]}"
+                                                 f" make cExe ;"
+                                                 f" pwd ; ls",
                                 shell=True,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.STDOUT,  # Combină erorile cu output-ul normal
@@ -137,16 +137,9 @@ class Server:
 
                             if C.returncode != 0:
                                 print(f"\n[Eroare Exit Code: {C.returncode}]")
-                        else:
-                            print()
-                            print()
-                            print(f"nu am detectat nici un fisier .c, in folderul {patttt}")
-                            print()
-                            print()
 
-                        # cpp = list(p.glob(f"{zips.filename}/*.cpp"))
-                        # if cpp:
-                        #     subprocess.run(f"make cppBin",shell=True)
+
+
                 except BadZipFile:
                     continue
                 except Exception as e:
