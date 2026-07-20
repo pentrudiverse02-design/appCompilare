@@ -1,8 +1,13 @@
-.PHONY: cBin cExe
-SHELL := bash
-CC = gccCFLAGS
+.PHONY: cBin cExe cppBin
+SHELL := /bin/bash
+
+CC = gcc
 CFLAGS = -g
 
 cExe: cBin
+
 cBin:
-	echo "am apelat cBin"
+	@echo "am apelat cBin"
+
+cppBin:
+	@echo "am apelat cppBin"

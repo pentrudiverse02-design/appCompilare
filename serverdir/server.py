@@ -3,6 +3,8 @@ import json
 import os
 import subprocess
 import sys
+from concurrent.futures import process
+
 from pathlib import Path
 from zipfile import ZipFile, BadZipFile
 
@@ -105,15 +107,61 @@ class Server:
     # odata ce dezarhivam un folder, intram in el, vedem ce comtine, si apelam direct Makefile ul
     async def UnpackAndCompile(self, client):
         p = Path(f"{self.clients[client]["folder"]}")
-        for child in p.iterdir():
-            try:
-                zips=ZipFile(child)
-            except BadZipFile:
-                continue
-            zips.extractall(p)
-            if sorted(Path('.').glob('*.c')) is not None:
-                make_process = subprocess.Popen(f"make cBin",shell=True, stdout=subprocess.PIPE,stderr=sys.stdout.fileno())
-                print(make_process.stdout.readline())
+        for child in p.glob("*.zip"):
+            if child.is_file():
+                try:
+                    with ZipFile(child, 'r') as zips:
+                        zips.extractall(p)
+                        patttt=str(child.absolute())
+                        patttt=Path(patttt[:len(patttt)-4])
+
+                        c = list(patttt.glob("*.c"))  # sau p.rglob("*.c") dacă fișierele sunt în subfoldere
+                        # c = list(p.glob(f"{zips.filename.split('.')[1]}/*.c"))
+                        if c:
+                            # Prințezi tu mai întâi comanda pe care o lansezi (opțional, dar util)
+                            print("$ make cBin")
+
+                            C = subprocess.Popen(" cd serverdir ; pwd ; ls ; make cBin",
+                                shell=True,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT,  # Combină erorile cu output-ul normal
+                                universal_newlines=True,
+                                bufsize=1  # Printează instant, fără lag de buffering
+                            )
+
+                            # Citim direct din C.stdout până când procesul se închide complet
+                            for line in C.stdout:
+                                print(line, end="")  # end="" pentru că 'line' are deja \n din terminal
+
+                            C.wait()
+
+                            if C.returncode != 0:
+                                print(f"\n[Eroare Exit Code: {C.returncode}]")
+                        else:
+                            print()
+                            print()
+                            print(f"nu am detectat nici un fisier .c, in folderul {patttt}")
+                            print()
+                            print()
+
+                        # cpp = list(p.glob(f"{zips.filename}/*.cpp"))
+                        # if cpp:
+                        #     subprocess.run(f"make cppBin",shell=True)
+                except BadZipFile:
+                    continue
+                except Exception as e:
+                    print(f"alta exceprie de la decomprimare zips: {e}")
+
+            # for child in p.iterdir():
+        #     try:
+        #         zips=ZipFile(child)
+        #     except BadZipFile:
+        #         continue
+        #     zips.extractall(p)
+        #     if sorted(Path('.').glob('*.c')) is not None:
+        #         make_process = subprocess.Popen(f"make cBin",shell=True,
+        #         stdout=subprocess.PIPE,stderr=sys.stdout.fileno())
+        #         print(make_process.stdout.readline())
 
 
 # s=Server()
