@@ -1,4 +1,7 @@
-FROM ubuntu:latest
+FROM python:latest
 LABEL authors="david"
 
-ENTRYPOINT ["top", "-b"]
+COPY comune ./comune
+COPY serverdir/server.py .
+
+CMD ["python3", "-m" , "server"]

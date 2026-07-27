@@ -3,6 +3,8 @@ import json
 import os
 import subprocess
 import sys
+sys.path.insert(0, '..')
+import comune
 from concurrent.futures import process
 
 from pathlib import Path
