@@ -44,7 +44,6 @@ for ((i=0;i<nrClients;i++)); do
   echo ""
   echo ""
   echo ""
-  echo ""
   variabilaRandCompile=$(($(random ${lenComp})-1))
   variabilaRandArchitecture=$(($(random ${lenSys})-1))
   vc=${compileFor[${variabilaRandCompile}]}
@@ -52,10 +51,6 @@ for ((i=0;i<nrClients;i++)); do
   vs=${sysarhi[${variabilaRandArchitecture}]}
   echo "${vs}"
   vstay=$(($(random 2)-1))
-  echo "${vstay}"
-  echo "${vstay}"
-  echo "${vstay}"
-  echo "${vstay}"
 
   nume=$(GenRandNameFolder)
   echo "${nume}"

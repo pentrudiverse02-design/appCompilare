@@ -75,7 +75,9 @@ class Client:
             match header:
                 case PacketType.STATUS:
                     payload = await GetPacketContent(self.reader, lenght)
+                    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                     print(f"{payload.decode('utf-8')}")
+                    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
                 case PacketType.SELECTED_ZIPS:
                     payload = await GetPacketContent(self.reader, lenght)
@@ -85,7 +87,7 @@ class Client:
                     self.ZIP.GetZip()
 
                 case PacketType.DISCONNECT:
-                    pass
+                    await self.Disconect()
 
 
     async def SendZips(self):
@@ -149,9 +151,9 @@ class Client:
         await self.ConnectToServer()
         print("trimitere zips")
         await self.SendZips()
-        print("deconectare")
-        await self.Disconect()
-
+        # print("deconectare")
+        # await self.Disconect()
+        await self.ReceiveStreamHandle()
 
 def ConvertToBool( str ):
     if str =="1":

@@ -1,4 +1,4 @@
-#include <stdlib>
+#include <stdio.h>
 #include "h.h"
 int f()
 {
