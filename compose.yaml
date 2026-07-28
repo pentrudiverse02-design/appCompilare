@@ -1,0 +1,7 @@
+services:
+    app:
+        image: tagexp3
+        ports:
+            - "8008:8008"
+        stdin_open: true
+        tty: true
