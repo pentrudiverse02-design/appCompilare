@@ -137,7 +137,7 @@ class Server:
                              f' pwd; '
                              f" cd {patttt} ;pwd ; ls ; "
                              f" ARCHITECTURE={self.clients[client]["sysArchi"]} ; "
-                             f" make -f ~/app_compilare/appCompilare/serverdir/Makefile {filetype} ;"
+                             f" make -f ~/appCompilare/serverdir/Makefile {filetype} ;"
                              f'echo "\n---------------- AM TERMINAT APELUL DIN PYTHON -----------------" ;'
                              f'echo ""')
                     C = await asyncio.create_subprocess_shell(command,
