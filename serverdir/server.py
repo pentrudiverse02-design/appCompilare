@@ -3,6 +3,8 @@ import json
 import os
 import subprocess
 import sys
+from os import path
+
 sys.path.insert(0, '..')
 import comune
 from concurrent.futures import process
@@ -80,7 +82,7 @@ class Server:
                 case PacketType.ZIP:
                     print(f"apelez metoda de receptie zips de la {client}")
                     await self.ReceiveZip(client)
-                    await self.UnpackAndCompile(client)
+                    await self.UnpackAndCompile(client, writer)
                 case PacketType.ERROR:
                     print("a fost detectata o eroare de tipul")
                     self.DisconnectClient(client)
@@ -101,45 +103,72 @@ class Server:
     def DisconnectClient(self, client):
         # verificam daca putem sa stergem clientul
         if self.clients.keys().__contains__(client):
-            if self.clients[client]["stay"] is False:
-                os.removedirs("AppCompilareServerDir/ascunse/" + str(self.clients[str(client)]))
+            # if self.clients[client]["stay"] is False:
+            #     os.removedirs("AppCompilareServerDir/ascunse/" + str(self.clients[str(client)]))
             self.clients.pop(client)
 
     # aici o sa trebuiasca sa iteram lista de fisiere .zip ale clientului
     # odata ce dezarhivam un folder, intram in el, vedem ce comtine, si apelam direct Makefile ul
-    async def UnpackAndCompile(self, client):
+    async def UnpackAndCompile(self, client, writer: asyncio.StreamWriter):
         p = Path(f"{self.clients[client]["folder"]}")
         for child in p.glob("*.zip"):
             if child.is_file():
                 try:
                     with ZipFile(child, 'r') as zips:
                         zips.extractall(p)
-                        patttt=str(child.absolute())
-                        patttt=Path(patttt[:len(patttt)-4])
+                        patttt = child.parent / child.stem
+                        print(patttt)
                         c = list(patttt.glob("*.c"))
+                        cpp = list(patttt.glob("*.cpp"))
                         if c:
+                            filetype = "cExe"
+                        elif cpp:
+                            filetype = "cppExe"
+                        command = (f'echo ""'
+                                   f'echo "----------------- APELEZ SHELL DIN PYTHON ----------------" ;'
+                                   f' pwd; '
+                                   f" cd {patttt} ;pwd ; ls ; "
+                                   f" ARCHITECTURE={self.clients[client]["sysArchi"]} ; "
+                                   f" make -f ~/app_compilare/appCompilare/serverdir/Makefile {filetype} ;"
+                                   f'echo "\n---------------- AM TERMINAT APELUL DIN PYTHON -----------------" ;'
+                                   f'echo ""')
+                        C = await asyncio.create_subprocess_shell(command,
+                                                                  stdout=asyncio.subprocess.PIPE,
+                                                                  stderr=asyncio.subprocess.STDOUT
+                                                                  )
+                        try:
+                            stdoutt, _ = await asyncio.wait_for(C.communicate(), timeout=120)
+                            await WritePacket(writer, PacketType.STATUS, stdoutt)
+                            print(stdoutt.decode(errors="replace"))
+                        except asyncio.TimeoutError:
+                            print(f"TIMEOUT la compilare pentru {child}")
+                            C.kill()
+                            await C.wait()
+                        await asyncio.sleep(0)
+                        continue
+                        # commandsCpp = (f" ls ; cd serverdir ; pwd ; ls ;  "
+                        #                f" cd AppCompilareServerDir/${patttt} ;  pwd ; ls ; "
+                        #                f" ARCHITECTURE={self.clients[client]["sysArchi"]} ;"
+                        #                f" make -C cppExe ;"
+                        #                f" pwd ; ls ;"
+                        #                f" cd .. ;")
+                        # if c:
+                        #     C = subprocess.Popen(commandsC,
+                        #                          shell=True,
+                        #                          stdout=subprocess.PIPE,
+                        #                          stderr=subprocess.STDOUT,  # Combină erorile cu output-ul normal
+                        #                          universal_newlines=True,
+                        #                          bufsize=1  # Printează instant, fără lag de buffering
+                        #                          )
 
-
-                            C = subprocess.Popen(f" cd serverdir ; pwd ; ls "
-                                                 f" ARCHITECTURE={self.clients[client]["sysArchi"]}"
-                                                 f" make cExe ;"
-                                                 f" pwd ; ls",
-                                shell=True,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT,  # Combină erorile cu output-ul normal
-                                universal_newlines=True,
-                                bufsize=1  # Printează instant, fără lag de buffering
-                            )
-
-                            # Citim direct din C.stdout până când procesul se închide complet
-                            for line in C.stdout:
-                                print(line, end="")  # end="" pentru că 'line' are deja \n din terminal
-
-                            C.wait()
-
-                            if C.returncode != 0:
-                                print(f"\n[Eroare Exit Code: {C.returncode}]")
-
+                        # Citim direct din C.stdout până când procesul se închide complet
+                        # for line in C.stdout:
+                        #     print(line, end="")  # end="" pentru că 'line' are deja \n din terminal
+                        #
+                        # C.wait()
+                        #
+                        # if C.returncode != 0:
+                        #     print(f"\n[Eroare Exit Code: {C.returncode}]")
 
 
                 except BadZipFile:
@@ -147,19 +176,6 @@ class Server:
                 except Exception as e:
                     print(f"alta exceprie de la decomprimare zips: {e}")
 
-            # for child in p.iterdir():
-        #     try:
-        #         zips=ZipFile(child)
-        #     except BadZipFile:
-        #         continue
-        #     zips.extractall(p)
-        #     if sorted(Path('.').glob('*.c')) is not None:
-        #         make_process = subprocess.Popen(f"make cBin",shell=True,
-        #         stdout=subprocess.PIPE,stderr=sys.stdout.fileno())
-        #         print(make_process.stdout.readline())
-
-
-# s=Server()
 
 if __name__ == '__main__':
     import argparse

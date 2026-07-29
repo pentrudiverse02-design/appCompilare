@@ -27,7 +27,7 @@ lenZips="${#zips[@]}"
 lenSys="${#sysarhi[@]}"
 lenComp="${#compileFor[@]}"
 
-nrClients=5
+nrClients=1
 
 mkdir clients
 echo ""

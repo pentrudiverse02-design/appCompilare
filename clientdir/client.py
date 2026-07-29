@@ -11,7 +11,9 @@ from comune.zips import ZipClass
 
 class Client:
     tasks = set()
-    serverCon = "127.0.0.1", 8008
+    #aici trebuie sa stam pe 0.0.0.0 Pe local se asculta doar in container
+    serverConAddress = "127.0.0.1"
+    serverConPort = 8008
     writer, reader = asyncio.StreamWriter, asyncio.StreamReader
     compileFor = CompilationType.RELEASE
     sysArchi = SystemArchitecture.x86_64
@@ -58,7 +60,7 @@ class Client:
 
 
     async def ConnectToServer(self):
-        self.reader, self.writer = await asyncio.open_connection("127.0.0.1", 8008)
+        self.reader, self.writer = await asyncio.open_connection(self.serverConAddress,self.serverConPort)
         print(f'Send: ')
         await WritePacket(self.writer, PacketType.LOGIN_CREDENTIALS, self.GetClientData())
         self.ZIP = ZipClass(self.writer, self.reader, "clients")

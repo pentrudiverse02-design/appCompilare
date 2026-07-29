@@ -24,4 +24,4 @@ cExe:
 	$(CC) $(CFLAGS) *.c -o exeC
 
 cppExe:
-	$(CXX) $(CXX_FLAGS) *.cpp -o exeCpp
+	$(CXX)  *.cpp -o exeCpp
