@@ -1,7 +1,32 @@
 services:
-    app:
-        image: comunica_teoretic
+    servers_container:
+        image: servers_image
         ports:
             - "8008:8008"
-        stdin_open: true
         tty: true
+        container_name: my-server
+        healthcheck:
+            test: [ "CMD", "lsof", "-Pi", ":8008", "-sTCP:LISTEN" ]
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 2s
+        networks:
+            - network1
+
+    clients_container:
+        image: clients_image
+        depends_on:
+            servers_container:
+                condition: service_healthy
+        tty: true
+        networks:
+            - network1
+        deploy:
+            mode: replicated
+            replicas: 10
+
+networks:
+    network1:
+        name: retea
+        external: true

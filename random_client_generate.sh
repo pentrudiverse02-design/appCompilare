@@ -9,7 +9,6 @@ random()
 {
   echo $(( (( RANDOM % $1 )) +1 ))
 }
-
 #set -x
 cd clientdir/ZipsToBorrow || exit 1
 echo ""
@@ -30,7 +29,7 @@ lenComp="${#compileFor[@]}"
 
 nrClients=1
 
-mkdir -p clients
+mkdir clients
 echo ""
 pwd
 ls

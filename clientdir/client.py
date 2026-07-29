@@ -12,7 +12,7 @@ from comune.zips import ZipClass
 class Client:
     tasks = set()
     #aici trebuie sa stam pe 0.0.0.0 Pe local se asculta doar in container
-    serverConAddress = "127.0.0.1"
+    serverConAddress = "my-server"
     serverConPort = 8008
     writer, reader = asyncio.StreamWriter, asyncio.StreamReader
     compileFor = CompilationType.RELEASE

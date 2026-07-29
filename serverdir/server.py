@@ -10,7 +10,7 @@ from comune.zips import ZipClass
 
 class Server:
     clients = {}
-    server_host = '0.0.0.0'
+    server_host = "my-server"
     server_port = 8008
     folderServer = 'serverdir/'
     maxConnections = 0
@@ -141,6 +141,7 @@ class Server:
                              f' pwd; '
                              f" cd {patttt} ;pwd ; ls ; "
                              f" ARCHITECTURE={self.clients[client]["sysArchi"]} ; "
+                             #de aici pocneste in docker, schimba cu adresa relativa
                              f" make -f ~/appCompilare/serverdir/Makefile {filetype} ;"
                              f'echo "\n---------------- AM TERMINAT APELUL DIN PYTHON -----------------" ;'
                              f'echo ""')
