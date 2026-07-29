@@ -1,6 +1,6 @@
 services:
     app:
-        image: tagexp3
+        image: comunica_teoretic
         ports:
             - "8008:8008"
         stdin_open: true

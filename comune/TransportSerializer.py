@@ -4,7 +4,7 @@ import struct
 from comune.PacketType import PacketType as PacketType
 HEADER_FORMAT = "!BI"  # ! = little endian , B = Byte ,  I = Integer
 HEADER_SIZE = struct.calcsize(HEADER_FORMAT)
-PAYLOAD_SIZE = 1024
+PAYLOAD_SIZE = 5
 
 # dupa aceasta functie trebuie musai folosit GetPacketContent,
 # intrucat avem deja citit de pe reader headerul, atentie mare
@@ -13,6 +13,9 @@ PAYLOAD_SIZE = 1024
 async def ReadPacket(reader: asyncio.StreamReader):
     try:
         header = await reader.read(HEADER_SIZE)
+        if header.__len__()<PAYLOAD_SIZE:
+            print(f"probleme la {header} cu dimensiunea {header.__len__()}")
+            return 0,0
         typep, length = struct.unpack(HEADER_FORMAT, header)
         payload = await reader.readexactly(int(length))
         return typep, payload
@@ -36,6 +39,9 @@ async def ReadPacketTypeAndLength(reader: asyncio.StreamReader) :
         print("reader e gol, trebuie sa incheiem conexiunea")
     try:
         header = await reader.read(HEADER_SIZE)
+        if header.__len__()<PAYLOAD_SIZE:
+            print(f"probleme la {header} cu dimensiunea {header.__len__()}")
+            return 0,0
         typep, lenght = struct.unpack(HEADER_FORMAT, header)
         return typep, lenght
     except (ConnectionError, ConnectionResetError, asyncio.IncompleteReadError) as e:

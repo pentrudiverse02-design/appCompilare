@@ -10,7 +10,7 @@ from comune.zips import ZipClass
 
 class Server:
     clients = {}
-    server_host = '127.0.0.1'
+    server_host = '0.0.0.0'
     server_port = 8008
     folderServer = 'serverdir/'
     maxConnections = 0
@@ -32,6 +32,7 @@ class Server:
 
     async def ClientConnect(self, addr, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
         packtype, payload = await ReadPacket(reader)
+
         if packtype != PacketType.LOGIN_CREDENTIALS:
             s = f"draga {addr}, trimite mi creditentialele tale".encode('utf-8')
             await WritePacket(writer, PacketType.ERROR, s)
@@ -73,6 +74,9 @@ class Server:
                 await self.ClientConnect(writer.get_extra_info('peername'), reader, writer)
                 continue
             header, lenght = await ReadPacketTypeAndLength(reader)
+            if header == lenght and header ==0:
+                print("o sa inchidem conexiunea cu clientul")
+                await self.DisconnectClient(client)
             match header:
                 case PacketType.ZIP:
                     print(f"apelez metoda de receptie zips de la {client}")
