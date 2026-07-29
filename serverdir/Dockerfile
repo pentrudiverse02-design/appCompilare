@@ -3,5 +3,4 @@ LABEL authors="david"
 
 COPY comune ./comune
 ADD server.py .
-install gcc
 CMD ["python3", "-m" , "server"]

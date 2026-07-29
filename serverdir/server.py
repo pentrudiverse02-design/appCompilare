@@ -1,13 +1,5 @@
-import asyncio
 import json
 import os
-import subprocess
-import sys
-from os import path
-
-sys.path.insert(0, '..')
-import comune
-from concurrent.futures import process
 
 from pathlib import Path
 from zipfile import ZipFile, BadZipFile
@@ -65,7 +57,10 @@ class Server:
         await WritePacket(self.clients[addr]["writer"],
                           PacketType.STATUS,
                           "ok".encode('utf-8'))
-        print(f"am primit de la tine {addr} datele {self.clients[addr]}")
+        print(f"am primit de la tine {addr} datele {self.clients[addr]["compileFor"]}  "
+              f"{self.clients[addr]["sysArchi"]}  "
+              f"{self.clients[addr]["folder"]}   "
+              f"{self.clients[addr]["stay"]}" )
 
     # probabil o sa trebuiasca sa implementez la fiecare metoda din clasa de mesagerie un
     # return True False
@@ -82,10 +77,11 @@ class Server:
                 case PacketType.ZIP:
                     print(f"apelez metoda de receptie zips de la {client}")
                     await self.ReceiveZip(client)
-                    await self.UnpackAndCompile(client, writer)
+                    await self.UnpackAndCompile(client,writer)
+                    await WritePacket(writer,PacketType.DISCONNECT,bytes())
                 case PacketType.ERROR:
                     print("a fost detectata o eroare de tipul")
-                    self.DisconnectClient(client)
+                    await self.DisconnectClient(client)
                     break
                 case PacketType.SELECTED_ZIPS:
                     payload = await GetPacketContent(reader, lenght)
@@ -94,13 +90,13 @@ class Server:
                     self.clients[client]["zip"].ZipsToReceive(payload)
                     # ZipToReceive(json.loads(payload.decode('utf-8')))
                 case PacketType.DISCONNECT:
-                    self.DisconnectClient(client)
+                    await self.DisconnectClient(client)
                     break
 
     async def ReceiveZip(self, client):
         await self.clients[client]["zip"].GetZip()
 
-    def DisconnectClient(self, client):
+    async def DisconnectClient(self, client):
         # verificam daca putem sa stergem clientul
         if self.clients.keys().__contains__(client):
             # if self.clients[client]["stay"] is False:
@@ -109,72 +105,67 @@ class Server:
 
     # aici o sa trebuiasca sa iteram lista de fisiere .zip ale clientului
     # odata ce dezarhivam un folder, intram in el, vedem ce comtine, si apelam direct Makefile ul
-    async def UnpackAndCompile(self, client, writer: asyncio.StreamWriter):
-        p = Path(f"{self.clients[client]["folder"]}")
-        for child in p.glob("*.zip"):
-            if child.is_file():
-                try:
-                    with ZipFile(child, 'r') as zips:
-                        zips.extractall(p)
-                        patttt = child.parent / child.stem
-                        print(patttt)
-                        c = list(patttt.glob("*.c"))
-                        cpp = list(patttt.glob("*.cpp"))
-                        if c:
-                            filetype = "cExe"
-                        elif cpp:
-                            filetype = "cppExe"
-                        command = (f'echo ""'
-                                   f'echo "----------------- APELEZ SHELL DIN PYTHON ----------------" ;'
-                                   f' pwd; '
-                                   f" cd {patttt} ;pwd ; ls ; "
-                                   f" ARCHITECTURE={self.clients[client]["sysArchi"]} ; "
-                                   f" make -f ~/app_compilare/appCompilare/serverdir/Makefile {filetype} ;"
-                                   f'echo "\n---------------- AM TERMINAT APELUL DIN PYTHON -----------------" ;'
-                                   f'echo ""')
-                        C = await asyncio.create_subprocess_shell(command,
-                                                                  stdout=asyncio.subprocess.PIPE,
-                                                                  stderr=asyncio.subprocess.STDOUT
-                                                                  )
-                        try:
-                            stdoutt, _ = await asyncio.wait_for(C.communicate(), timeout=120)
-                            await WritePacket(writer, PacketType.STATUS, stdoutt)
-                            print(stdoutt.decode(errors="replace"))
-                        except asyncio.TimeoutError:
-                            print(f"TIMEOUT la compilare pentru {child}")
-                            C.kill()
-                            await C.wait()
-                        await asyncio.sleep(0)
-                        continue
-                        # commandsCpp = (f" ls ; cd serverdir ; pwd ; ls ;  "
-                        #                f" cd AppCompilareServerDir/${patttt} ;  pwd ; ls ; "
-                        #                f" ARCHITECTURE={self.clients[client]["sysArchi"]} ;"
-                        #                f" make -C cppExe ;"
-                        #                f" pwd ; ls ;"
-                        #                f" cd .. ;")
-                        # if c:
-                        #     C = subprocess.Popen(commandsC,
-                        #                          shell=True,
-                        #                          stdout=subprocess.PIPE,
-                        #                          stderr=subprocess.STDOUT,  # Combină erorile cu output-ul normal
-                        #                          universal_newlines=True,
-                        #                          bufsize=1  # Printează instant, fără lag de buffering
-                        #                          )
-
-                        # Citim direct din C.stdout până când procesul se închide complet
-                        # for line in C.stdout:
-                        #     print(line, end="")  # end="" pentru că 'line' are deja \n din terminal
-                        #
-                        # C.wait()
-                        #
-                        # if C.returncode != 0:
-                        #     print(f"\n[Eroare Exit Code: {C.returncode}]")
 
 
-                except BadZipFile:
+    async def UnpackAndCompile(self, client,writer: asyncio.StreamWriter):
+        p = Path(self.clients[client]['folder'])
+        lista=[]
+        for c in p.glob("*.zip"):
+            lista.append(c)
+        print("-------")
+        print()
+        print(lista)
+        print()
+        print("!!!!!!!!!!!")
+        for child in lista:
+            if not child.is_file():
+                print("ce MA?")
+                continue
+            try:
+                with ZipFile(child, 'r') as zips:
+                    zips.extractall(p)
+                    patttt=child.parent/child.stem
+                    print(patttt)
+                    c = list(patttt.glob("*.c"))
+                    cpp = list(patttt.glob("*.cpp"))
+                    if c:
+                        filetype="cExe"
+                    elif cpp:
+                        filetype="cppExe"
+                    command=(f'echo ""'
+                             f'echo "----------------- APELEZ SHELL DIN PYTHON ----------------" ;'
+                             f' pwd; '
+                             f" cd {patttt} ;pwd ; ls ; "
+                             f" ARCHITECTURE={self.clients[client]["sysArchi"]} ; "
+                             f" make -f ~/app_compilare/appCompilare/serverdir/Makefile {filetype} ;"
+                             f'echo "\n---------------- AM TERMINAT APELUL DIN PYTHON -----------------" ;'
+                             f'echo ""')
+                    C = await asyncio.create_subprocess_shell(command,
+                                                              stdout=asyncio.subprocess.PIPE,
+                                                              stderr=asyncio.subprocess.STDOUT
+                                                              )
+                    try:
+                        stdoutt, _ = await asyncio.wait_for(C.communicate(), timeout=120)
+                        await WritePacket(writer,PacketType.STATUS,stdoutt)
+                        print(stdoutt.decode(errors="replace"))
+                    except asyncio.TimeoutError:
+                        print(f"TIMEOUT la compilare pentru {child}")
+                        C.kill()
+                        await C.wait()
+                    await asyncio.sleep(0)
                     continue
-                except Exception as e:
-                    print(f"alta exceprie de la decomprimare zips: {e}")
+
+                    # stdout,_ =await C.communicate()
+                    # if stdout:
+                    #     print(stdout)
+                    # await C.wait()
+
+            except BadZipFile:
+                continue
+            except Exception as e:
+                print(f"alta exceprie de la decomprimare zips: {e}")
+
+
 
 
 if __name__ == '__main__':
